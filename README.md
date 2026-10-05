@@ -8,6 +8,10 @@ Professional networks optimise for collecting connections. JumpIn optimises for 
 Discover → Profile → See availability → Jump In → Meet → Connection
 ```
 
+### ▶ [Open the live demo](https://nweinberg97.github.io/JumpIn/)
+
+No sign-up: choose **Explore the demo as John**. Works on desktop and phone.
+
 This is a portfolio prototype: a working product, not a production service. It runs with **zero setup** in demo mode, and every external integration (LinkedIn, Google Calendar, Google Meet, Instagram, email) is real code that switches on when you add credentials.
 
 ---
@@ -231,6 +235,10 @@ A database becomes necessary the moment there are **two real people**:
 No component needs to change.
 
 ---
+
+## Live demo (GitHub Pages)
+
+The demo link above is the real app's pages bundled as a static site (`demo/`), deployed by `.github/workflows/demo.yml` on every push to `main`. GitHub Pages has no server, so it always runs in demo mode: routes live after the `#` (e.g. `/#/discover`), and OAuth, Calendar and email use their labelled fallbacks. Build it locally with `npm run demo:build` (output in `demo/dist`). For real sign-in and Meet creation, run the Next.js app (`npm run dev`) or deploy it to a Node host such as Vercel with the environment variables above.
 
 ## Testing notes
 
