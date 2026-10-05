@@ -35,4 +35,6 @@ await esbuild.build({
 });
 
 cpSync(join(here, "index.html"), join(out, "index.html"));
+// Tab icons: the same files Next.js serves from src/app.
+for (const f of ["favicon.ico", "icon.svg", "apple-icon.png"]) cpSync(join(root, "src/app", f), join(out, f));
 console.log("Demo built →", out);
