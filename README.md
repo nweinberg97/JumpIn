@@ -238,7 +238,9 @@ No component needs to change.
 
 ## Live demo (GitHub Pages)
 
-The demo link above is the real app's pages bundled as a static site (`demo/`), deployed by `.github/workflows/demo.yml` on every push to `main`. GitHub Pages has no server, so it always runs in demo mode: routes live after the `#` (e.g. `/#/discover`), and OAuth, Calendar and email use their labelled fallbacks. Build it locally with `npm run demo:build` (output in `demo/dist`). For real sign-in and Meet creation, run the Next.js app (`npm run dev`) or deploy it to a Node host such as Vercel with the environment variables above.
+The demo link above is the real app's pages bundled as a static site and committed in `docs/`. GitHub Pages publishes it straight from the branch: **Settings → Pages → Deploy from a branch → `main` → `/docs`**. After changing the app, run `npm run demo:build` and commit `docs/`. The source for the static build is in `demo/`.
+
+Pages has no server, so the demo always runs in demo mode: routes live after the `#` (e.g. `/#/discover`), and OAuth, Calendar and email use their labelled fallbacks. For real sign-in and Meet creation, run the Next.js app (`npm run dev`) or deploy it to a Node host such as Vercel with the environment variables above.
 
 ## Testing notes
 

@@ -1,14 +1,15 @@
 /**
- * Builds the static demo into demo/dist (deployed to GitHub Pages by
- * .github/workflows/demo.yml).   npm run demo:build
+ * Builds the static demo into docs/, which GitHub Pages publishes straight
+ * from the main branch (Settings → Pages → Deploy from a branch → main → /docs).
+ * Run after changing the app, then commit docs/:   npm run demo:build
  */
-import { cpSync, mkdirSync, rmSync } from "node:fs";
+import { cpSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "..");
-const out = join(here, "dist");
+const out = join(root, "docs");
 const esbuild = await import(process.env.ESBUILD_MODULE ?? "esbuild");
 
 rmSync(out, { recursive: true, force: true });
@@ -35,6 +36,8 @@ await esbuild.build({
 });
 
 cpSync(join(here, "index.html"), join(out, "index.html"));
+// Serve files as-is (no Jekyll processing) on GitHub Pages.
+writeFileSync(join(out, ".nojekyll"), "");
 // Tab icons: the same files Next.js serves from src/app.
 for (const f of ["favicon.ico", "icon.svg", "apple-icon.png"]) cpSync(join(root, "src/app", f), join(out, f));
 console.log("Demo built →", out);
