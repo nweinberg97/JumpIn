@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { withGoogle } from "@/server/googleAccess";
 import { createMeetEvent } from "@/server/googleCalendar";
 import { deliverableEmailFor } from "@/server/memberDirectory";
+import { take } from "@/server/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid start/end" }, { status: 400 });
   }
 
-  return withGoogle(request, async (accessToken) => {
+  return withGoogle(request, async (accessToken, session) => {
+    if (!take(session.profile.sub, "meeting")) {
+      return NextResponse.json(
+        { error: "Too many calls started this hour. Try again in a little while.", code: "rate_limited" },
+        { status: 429 },
+      );
+    }
     const guest = body.inviteMember ? deliverableEmailFor(body.memberId) : null;
     const result = await createMeetEvent(accessToken, {
       summary: body.title.slice(0, 200),

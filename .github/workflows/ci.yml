@@ -1,4 +1,4 @@
-# Type-checks and builds the Next.js app on every push and pull request.
+# Type-checks, tests and builds the Next.js app on every push and pull request.
 name: CI
 
 on:
@@ -19,4 +19,13 @@ jobs:
           node-version: 22
       - run: npm install --no-audit --no-fund
       - run: npm run typecheck
+      - run: npm test
       - run: npm run build
+
+  database:
+    # Applies supabase/migrations to a throwaway Postgres and runs the
+    # row-level security tests. No Supabase account or secrets needed.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm run test:db

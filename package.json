@@ -8,7 +8,9 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "demo:build": "node demo/build.mjs"
+    "demo:build": "node demo/build.mjs",
+    "test": "node --experimental-strip-types --no-warnings --import ./tests/register.mjs --test \"tests/unit/**/*.test.ts\"",
+    "test:db": "bash scripts/test-db.sh"
   },
   "dependencies": {
     "next": "^16.0.0",
