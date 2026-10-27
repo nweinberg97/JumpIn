@@ -7,16 +7,36 @@ Everything between today and a working, launched JumpIn. Tick items off as they'
 
 Paste secret keys only into Supabase or Vercel, never into chat or this file.
 
+Items marked **(Claude can do this)** are ones Claude handles directly once that account is connected. You just say "go".
+
+---
+
+## Working together: what Claude can connect to
+
+| Service | How Claude connects | What Claude does | What stays with you |
+| --- | --- | --- | --- |
+| GitHub | Already connected | Writes the code, pushes to the branch, opens PRs, merges when you say | Saying when to merge |
+| Supabase | Already connected (the Supabase connector in claude.ai). It currently sees only your Kitside organization | Once your new JumpIn organization is visible to it: creates the project, loads the database, runs security checks, reads logs, fetches the project URL and publishable key, fixes data | Creating the JumpIn organization; letting the connector see it; Google/LinkedIn sign-in settings; copying the secret key into Vercel |
+| Vercel | Add the **Vercel** connector in claude.ai → Settings → Connectors | Reads your deployments and build/runtime logs, so Claude can debug a failed deploy or a live error without you copying logs | Importing the project, environment variables, redeploying |
+| Resend | Add the **Resend** connector the same way | Adds your domain and tells you the DNS records, sends test emails, can set up the launch email as a broadcast | Buying the domain; adding DNS records at your registrar; pasting the API key into Vercel |
+| Google Cloud, LinkedIn developer portal | No connector exists | Exact step-by-step instructions, as below | All of it, including the client secrets |
+
+Secrets (the Supabase secret key, OAuth client secrets, API keys) always go from the service straight into Vercel or Supabase by you. Claude never needs to see them.
+
 ---
 
 ## Phase 1: Onboarding week (people can sign up, you approve them)
 
 ### You
 
-- [ ] **Supabase project.** supabase.com → New organization `JumpIn` (Free, separate from Kitside) → New project `jumpin`, region Canada (Central) or West US (Oregon). Save the database password in a password manager.
-- [ ] **Load the database.** Either connect the JumpIn organization to Claude and say "load it", or open SQL Editor and run the 4 files in `supabase/migrations/`, oldest first.
-- [ ] **Copy 3 values** from Supabase → Project Settings → API Keys: project URL, publishable key (`sb_publishable_…`), secret key (`sb_secret_…`).
+- [ ] **Supabase organization.** supabase.com → New organization `JumpIn` (Free plan, separate from Kitside).
+- [ ] **Let Claude see it.** claude.ai → Settings → Connectors → Supabase → reconnect, and allow the `JumpIn` organization. Then tell Claude "go".
+- [ ] **Create the project** `jumpin` in that organization, region Canada (Central) or West US (Oregon). **(Claude can do this)**
+- [ ] **Load the database** (the 4 files in `supabase/migrations/`) and run Supabase's security check on it. **(Claude can do this)**
+- [ ] **Project URL and publishable key.** Claude fetches these and gives them to you to paste into Vercel. **(Claude can do this)**
+- [ ] **Secret key** (`sb_secret_…`): you copy it from Supabase → Project Settings → API Keys straight into Vercel.
 - [ ] **Vercel.** vercel.com → sign in with GitHub → Add New → Project → `nweinberg97/JumpIn` → Deploy. Note the address (e.g. `jumpin-xyz.vercel.app`).
+- [ ] **Add the Vercel connector** in claude.ai → Settings → Connectors, so Claude can read your deployments and logs.
 - [ ] **Point Vercel at the new code.** Vercel → Settings → Git → production branch `backend-foundations`, or merge PR #1. Merging is safe for Martina's demo: it only changes when `docs/` is rebuilt.
 - [ ] **Vercel environment variables** (Settings → Environment Variables), then Redeploy:
   - [ ] `NEXT_PUBLIC_SUPABASE_URL` = project URL
@@ -32,7 +52,7 @@ Paste secret keys only into Supabase or Vercel, never into chat or this file.
 
   Paste the client ID and secret into Supabase → Authentication → Sign In / Providers → Google → Enable.
 - [ ] **LinkedIn sign-in (recommended: it's what gives the Verified badge).** Create a JumpIn LinkedIn Page → developer.linkedin.com → Create app linked to the Page → Products: "Sign In with LinkedIn using OpenID Connect" → Auth: redirect URL `https://<project-ref>.supabase.co/auth/v1/callback` → paste the ID and secret into Supabase → Providers → LinkedIn (OIDC).
-- [ ] **Smoke test** (15 min):
+- [ ] **Smoke test** (15 min). Claude watches the deployment logs and the database while you click, and fixes what breaks:
   - [ ] Sign in on your Vercel site → finish onboarding → you see the Onboarding banner and a **Founder** tab.
   - [ ] Founder page → set a launch date → make yourself a Connector.
   - [ ] Private window, second Google account → it sees "You're on the list" → approve it → it sees the app and the countdown.
@@ -54,7 +74,10 @@ Paste secret keys only into Supabase or Vercel, never into chat or this file.
 ### You
 
 - [ ] **Domain.** Buy one (~$10–20/year, e.g. Cloudflare or Namecheap).
-- [ ] **Resend.** resend.com → add the domain → add the DNS records it shows → create an API key.
+- [ ] **Resend account** at resend.com, then **add the Resend connector** in claude.ai → Settings → Connectors.
+- [ ] **Add the domain to Resend** and list the DNS records to add. **(Claude can do this)**
+- [ ] **Add those DNS records** at your domain registrar (copy and paste).
+- [ ] **Create a Resend API key** and paste it straight into Vercel.
 - [ ] **Vercel variables**, then Redeploy:
   - [ ] `RESEND_API_KEY`
   - [ ] `INVITE_FROM_EMAIL` = `JumpIn <hello@yourdomain.com>`
@@ -64,7 +87,7 @@ Paste secret keys only into Supabase or Vercel, never into chat or this file.
   - [ ] `GOOGLE_CLIENT_SECRET` (same OAuth client as sign-in)
 - [ ] **Approve** the privacy policy and terms, then **submit Google verification** (free, takes a few weeks; needed past 100 Calendar users).
 - [ ] **Test the full call loop** with a friend: Jump In → note → their email → Yes → same Meet.
-- [ ] **Founder page:** Send me a test → check it → Send to everyone on launch day.
+- [ ] **Founder page:** Send me a test → check it → Send to everyone on launch day. Claude checks Resend's delivery report afterwards. **(Claude can do this)**
 
 ### Claude: needed for calls to work properly
 
