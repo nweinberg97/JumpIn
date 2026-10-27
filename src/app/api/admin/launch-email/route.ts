@@ -18,10 +18,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Connect Resend first (RESEND_API_KEY, INVITE_FROM_EMAIL)", code: "not_configured" }, { status: 501 });
   }
   const body = (await request.json().catch(() => ({}))) as { test?: boolean };
-  const appUrl = `${originFor(request)}/discover`;
 
   if (body.test) {
-    await sendEmail({ to: me.email!, ...launchEmail(me.name, appUrl) });
+    await sendEmail({ to: me.email!, ...launchEmail({ name: me.name, appUrl: originFor(request) }) });
     return NextResponse.json({ sent: 1, test: true });
   }
 
@@ -48,7 +47,7 @@ export async function POST(request: NextRequest) {
   // Mark first, so a double click can't send twice.
   await db.from("launch_settings").update({ launch_email_sent_at: new Date().toISOString() }).eq("id", true);
   try {
-    const sent = await sendBatch(recipients.map((r) => ({ to: r.email, ...launchEmail(r.name, appUrl) })));
+    const sent = await sendBatch(recipients.map((r) => ({ to: r.email, ...launchEmail({ name: r.name, appUrl: originFor(request) }) })));
     return NextResponse.json({ sent });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Sending failed";

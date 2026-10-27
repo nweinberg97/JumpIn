@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { INTRO_TTL_MS, isEmail, maskEmail, type IntroPayload, type IntroProfile } from "@/lib/intro";
 import { base64UrlEncode } from "@/lib/invite";
 import { sign } from "@/server/crypto";
-import { introEmail, sendEmail } from "@/server/email";
+import { introducedNoticeEmail, introEmail, sendEmail, sendQuietly } from "@/server/email";
 import { env, integrationStatus, isConnectorEmail, originFor } from "@/server/env";
 import { createHash, randomUUID } from "node:crypto";
 import { isUuid } from "@/lib/data/rows";
@@ -140,6 +140,11 @@ export async function POST(request: NextRequest) {
       token_hash: createHash("sha256").update(token).digest("hex"),
     });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    // So an intro never surprises the person whose profile was shared.
+    await sendQuietly(
+      await emailForMember(subject.id),
+      introducedNoticeEmail({ subjectName: subject.name, fromName: me.name, recipientName: input.recipient.name, note: input.note, appUrl: originFor(request) }),
+    );
   }
 
   // Where the email goes. INVITE_TEST_RECIPIENT, when set, catches everything.

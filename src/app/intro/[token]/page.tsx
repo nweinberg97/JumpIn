@@ -86,7 +86,7 @@ export default function IntroPage() {
           ) : payload.recipientIsNew ? (
             <>
               <div className="invite-mail__buttons">
-                <Link href="/" className="btn btn--jump btn--lg">
+                <Link href={signed ? `/api/intros/claim?token=${encodeURIComponent(token)}` : "/"} className="btn btn--jump btn--lg">
                   Join JumpIn to meet {subjectFirst} <Icon name="arrowRight" size={18} />
                 </Link>
               </div>

@@ -14,6 +14,8 @@ interface Row {
   impact_areas: string[];
   onboarded: boolean;
   is_connector: boolean;
+  verified: boolean;
+  linkedin_url: string | null;
   joined_at: string;
   member_private: { email: string } | Array<{ email: string }> | null;
   memberships: { status: MembershipStatus; invited_by: string | null } | Array<{ status: MembershipStatus; invited_by: string | null }> | null;
@@ -31,7 +33,7 @@ export async function GET(request: NextRequest) {
     db
       .from("members")
       .select(
-        "id, name, avatar_url, headline, what_i_do, bio, impact_areas, onboarded, is_connector, joined_at, member_private(email), memberships(status, invited_by)",
+        "id, name, avatar_url, headline, what_i_do, bio, impact_areas, onboarded, is_connector, verified, linkedin_url, joined_at, member_private(email), memberships(status, invited_by)",
       )
       .order("joined_at", { ascending: false }),
     db.from("launch_settings").select("launch_at, opened_at, launch_email_sent_at").maybeSingle(),
@@ -50,6 +52,8 @@ export async function GET(request: NextRequest) {
       headline: r.headline,
       membership: m?.status ?? "waitlisted",
       isConnector: r.is_connector,
+      verified: r.verified,
+      linkedinUrl: r.linkedin_url,
       onboarded: r.onboarded,
       joinedAt: r.joined_at,
       gaps: profileGaps(r),

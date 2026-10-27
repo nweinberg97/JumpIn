@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { serverClient } from "@/lib/supabase/server";
 import { originFor } from "@/server/env";
+import { afterSignIn, INTRO_COOKIE } from "@/server/onboarding";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,18 @@ export async function GET(request: NextRequest) {
   if (!supabase) return NextResponse.redirect(new URL("/?auth=not-configured", origin));
   if (!code) return fail("missing_code");
 
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) return fail(error.message);
-  return NextResponse.redirect(new URL(`/auth/complete?live=1${safeNext ? `&next=${encodeURIComponent(safeNext)}` : ""}`, origin));
+
+  // Verified badge, warm intro, first emails (see server/onboarding.ts).
+  const introToken = request.cookies.get(INTRO_COOKIE)?.value;
+  if (data.user) {
+    await afterSignIn(data.user, introToken, origin, process.env.NEXT_PUBLIC_DEMO_URL || `${origin}/`);
+  }
+
+  const response = NextResponse.redirect(
+    new URL(`/auth/complete?live=1${safeNext ? `&next=${encodeURIComponent(safeNext)}` : ""}`, origin),
+  );
+  if (introToken) response.cookies.set(INTRO_COOKIE, "", { path: "/", maxAge: 0 });
+  return response;
 }

@@ -36,6 +36,11 @@ async function supabaseSignIn(provider: "google" | "linkedin_oidc", next?: strin
 export const authService = {
   /** Sign-in buttons work whenever the real backend is on. */
   liveSignIn: LIVE,
+  /**
+   * Live: show "Continue with LinkedIn" only once LinkedIn is set up in
+   * Supabase (NEXT_PUBLIC_LINKEDIN_SIGNIN=on). Blank = Google only.
+   */
+  linkedinSignIn: LIVE && process.env.NEXT_PUBLIC_LINKEDIN_SIGNIN === "on",
   continueWithLinkedIn(returnTo = "/auth/complete") {
     if (LIVE) return void supabaseSignIn("linkedin_oidc");
     go("/api/auth/linkedin", returnTo);

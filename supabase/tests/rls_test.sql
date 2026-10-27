@@ -23,7 +23,7 @@ create function pg_temp.expect_denied(stmt text, what text) returns void languag
 begin
   begin
     execute stmt;
-  exception when insufficient_privilege or check_violation then
+  exception when insufficient_privilege or check_violation or unique_violation then
     raise notice 'ok - %', what;
     return;
   end;
@@ -290,5 +290,18 @@ select pg_temp.expect(
   (select public.profile_gaps(m) from public.members m where m.id = '00000000-0000-0000-0000-00000000000d')
     = array['photo', 'headline', 'what I do', 'about', 'impact areas', 'onboarding'],
   'profile_gaps lists what a new member still needs');
+
+-- ── Email log ───────────────────────────────────────────────────────────────
+
+insert into public.email_log (member_id, kind) values ('00000000-0000-0000-0000-00000000000a', 'welcome');
+select pg_temp.expect_denied(
+  $$insert into public.email_log (member_id, kind) values ('00000000-0000-0000-0000-00000000000a', 'welcome')$$,
+  'a once-only email cannot be logged twice');
+
+begin;
+set local role authenticated;
+set local request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
+select pg_temp.expect_denied('select * from public.email_log', 'members cannot read the email log');
+commit;
 
 \warn 'All RLS tests passed.'

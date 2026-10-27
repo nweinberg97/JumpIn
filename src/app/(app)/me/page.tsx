@@ -48,8 +48,9 @@ export default function MyProfile() {
     if (!isEmail(draft.email)) return setError("Add a valid email address. It stays private.");
     setError(null);
     const saved = finalizeProfile({ ...draft, availability: viewer.availability });
-    await actions.updateViewer(saved);
-    setDraft(saved);
+    const done = await actions.updateViewer(saved);
+    if (!done) return;
+    setDraft(done);
     toast("Profile saved");
   };
 

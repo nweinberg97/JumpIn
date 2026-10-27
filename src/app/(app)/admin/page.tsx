@@ -101,7 +101,12 @@ export default function AdminPage() {
         <div>
           <p className="eyebrow">Founder</p>
           <h1 className="page-title">Onboarding &amp; launch</h1>
-          <p className="page-sub">Bring people in one by one, then open the doors for everyone at once.</p>
+          <p className="page-sub">
+            Bring people in one by one, then open the doors for everyone at once.{" "}
+            <a className="link-quiet" href="/email-previews" target="_blank" rel="noreferrer">
+              Preview every email <Icon name="external" size={13} />
+            </a>
+          </p>
         </div>
       </div>
 
@@ -220,13 +225,26 @@ export default function AdminPage() {
               <Avatar name={m.name} src={m.avatarUrl ?? undefined} size={48} />
               <div className="admin-row__main">
                 <p className="admin-row__name">
-                  {m.name} {m.isConnector && <ConnectorChip compact />}
+                  {m.name}
+                  {m.verified && (
+                    <span className="admin-verified" title="Verified">
+                      <Icon name="check" size={12} /> Verified
+                    </span>
+                  )}
+                  {m.isConnector && <ConnectorChip compact />}
                 </p>
                 <p className="admin-row__meta">
                   {m.email ?? "No email"} · joined {new Date(m.joinedAt).toLocaleDateString()}
                   {m.invitedBy && ` · intro from ${m.invitedBy}`}
                 </p>
                 {m.headline && <p className="admin-row__headline">{m.headline}</p>}
+                {m.linkedinUrl ? (
+                  <a className="admin-row__link" href={m.linkedinUrl} target="_blank" rel="noreferrer">
+                    <Icon name="external" size={13} /> Check their LinkedIn
+                  </a>
+                ) : (
+                  <p className="admin-row__meta">No LinkedIn link on their profile</p>
+                )}
                 {m.gaps.length > 0 ? (
                   <p className="admin-row__gaps">
                     Missing: {m.gaps.map((g) => <span key={g} className="admin-gap">{g}</span>)}
@@ -241,7 +259,7 @@ export default function AdminPage() {
                 {m.membership === "approved" ? (
                   <span className="admin-pill admin-pill--live">Approved</span>
                 ) : (
-                  <button className="btn btn--jump btn--sm" disabled={busy !== null} onClick={() => act(m, "approve", `${m.name} is approved`)}>
+                  <button className="btn btn--jump btn--sm" disabled={busy !== null} onClick={() => act(m, "approve", `${m.name} is approved. Welcome email sent if email is set up.`)}>
                     <Icon name="check" size={15} /> Approve
                   </button>
                 )}
@@ -253,6 +271,13 @@ export default function AdminPage() {
                   }
                 >
                   <Icon name="link2" size={15} /> {m.isConnector ? "Remove Connector" : "Make Connector"}
+                </button>
+                <button
+                  className="btn btn--outline btn--sm"
+                  disabled={busy !== null}
+                  onClick={() => act(m, m.verified ? "unverify" : "verify", m.verified ? `${m.name} is no longer verified` : `${m.name} is verified`)}
+                >
+                  <Icon name="shield" size={15} /> {m.verified ? "Remove Verified" : "Mark as verified"}
                 </button>
                 {m.membership === "approved" && (
                   <button className="btn btn--ghost btn--sm" disabled={busy !== null} onClick={() => act(m, "waitlist", `${m.name} moved back to waiting`)}>

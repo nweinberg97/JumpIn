@@ -10,6 +10,7 @@ import { Avatar } from "./Avatar";
 import { ConnectProvider } from "./connect/ConnectProvider";
 import { Icon, JumpInLogo, type IconName } from "./Icon";
 import { LaunchBanner, WaitlistPanel } from "./Launch";
+import { ProblemBar } from "./ProblemBar";
 import { StatusControl } from "./StatusControl";
 import { StatusPill } from "./StatusPill";
 import { ToastProvider } from "./Toast";
@@ -90,6 +91,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <LaunchBanner />
           <main className="main">{waiting && !profileRoute ? <WaitlistPanel /> : children}</main>
           <MobileTabs />
+          <ProblemBar />
         </div>
       </ConnectProvider>
     </ToastProvider>

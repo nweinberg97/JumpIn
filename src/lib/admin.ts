@@ -10,6 +10,10 @@ export interface AdminMember {
   headline: string;
   membership: MembershipStatus;
   isConnector: boolean;
+  /** Verified badge: you checked who they are (or they signed in with LinkedIn). */
+  verified: boolean;
+  /** Their LinkedIn URL, to check before approving or verifying. */
+  linkedinUrl: string | null;
   onboarded: boolean;
   joinedAt: string;
   /** What's missing before this profile is ready (see profileGaps). */
@@ -29,7 +33,7 @@ export interface AdminOverview {
   members: AdminMember[];
 }
 
-export type AdminAction = "approve" | "waitlist" | "suspend" | "connector" | "unconnector";
+export type AdminAction = "approve" | "waitlist" | "suspend" | "connector" | "unconnector" | "verify" | "unverify";
 
 /** Same rules as public.profile_gaps() in the database. */
 export function profileGaps(m: {

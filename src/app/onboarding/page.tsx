@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Icon, JumpInLogo } from "@/components/Icon";
 import { CardPreview } from "@/components/profile/CardPreview";
+import { ProblemBar } from "@/components/ProblemBar";
 import { finalizeProfile, isEmail } from "@/components/profile/finalize";
 import { CaresSection, IdentitySection, LinksSection, WorkSection } from "@/components/profile/ProfileSections";
 import { StatusControl } from "@/components/StatusControl";
@@ -59,18 +60,18 @@ export default function Onboarding() {
     const saved = finalizeProfile(draft);
     if (step < STEPS.length - 1) {
       const keep = { ...saved, availability: viewer?.availability ?? saved.availability };
-      await actions.updateViewer(keep);
+      if (!(await actions.updateViewer(keep))) return;
       setDraft(keep);
       setStep(step + 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
-      await actions.updateViewer({
+      const done = await actions.updateViewer({
         ...saved,
         availability: viewer?.availability ?? saved.availability,
         onboarded: true,
         joinedAt: new Date().toISOString(),
       });
-      router.push("/discover");
+      if (done) router.push("/discover");
     }
   };
 
@@ -78,6 +79,7 @@ export default function Onboarding() {
 
   return (
     <div className="onboarding">
+      <ProblemBar />
       <header className="onboarding__top">
         <span className="brand">
           <JumpInLogo size={28} /> <span>JumpIn</span>

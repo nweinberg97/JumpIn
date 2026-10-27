@@ -38,6 +38,8 @@ export interface AppState {
   mode: "demo" | "live";
   /** Launch countdown, approval and founder access (see AppAccess). */
   access: AppAccess;
+  /** Something didn't save; shown until dismissed or the next success. */
+  problem: string | null;
 }
 
 /** The demo is always fully open: it's for practising. */
@@ -54,7 +56,32 @@ let state: AppState = {
   integrations: { linkedin: false, google: false, instagram: false, email: false },
   mode: "demo",
   access: DEMO_ACCESS,
+  problem: null,
 };
+
+/** Plain words for a failed save; the detail goes to the console. */
+function explain(what: string, err: unknown) {
+  console.error(`[jumpin] ${what}`, err);
+  const message = err instanceof Error ? err.message : "";
+  if (/photo|upload|storage|payload too large|413/i.test(message)) {
+    return "Your photo didn't upload. Try a smaller image (under 2 MB), or a JPEG or PNG.";
+  }
+  if (/network|fetch|Failed to fetch/i.test(message)) return `${what} didn't save: you seem to be offline. Try again in a moment.`;
+  if (/not signed in|JWT|401/i.test(message)) return `${what} didn't save because you were signed out. Sign in again, then retry.`;
+  return `${what} didn't save. Try again; if it keeps happening, tell the JumpIn team.`;
+}
+
+/** Run a save; on failure, show the problem instead of failing silently. */
+async function attempt<T>(what: string, run: () => Promise<T>): Promise<T | null> {
+  try {
+    const result = await run();
+    if (state.problem) set({ problem: null });
+    return result;
+  } catch (err) {
+    set({ problem: explain(what, err) });
+    return null;
+  }
+}
 
 const listeners = new Set<() => void>();
 
@@ -123,10 +150,12 @@ export function ensureLoaded() {
 const uid = (prefix: string) =>
   `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 
+/** Returns the saved profile, or null (with `problem` set) if it didn't save. */
 async function saveViewer(viewer: Viewer) {
-  await repository.saveViewer(viewer);
-  set({ viewer });
-  return viewer;
+  const saved = await attempt("Your profile", () => repository.saveViewer(viewer));
+  if (!saved) return null;
+  set({ viewer: saved });
+  return saved;
 }
 
 export const actions = {
@@ -265,7 +294,8 @@ export const actions = {
   },
 
   async saveConnection(connection: Connection) {
-    await repository.saveConnection(connection);
+    const ok = await attempt("Your call", () => repository.saveConnection(connection));
+    if (!ok) return null;
     set({ connections: await repository.listConnections() });
     return connection;
   },
@@ -273,6 +303,10 @@ export const actions = {
   newConnectionId: () =>
     typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : uid("c"),
   newIntroId: () => uid("i"),
+
+  dismissProblem() {
+    set({ problem: null });
+  },
 
   async saveIntro(intro: WarmIntro) {
     await repository.saveIntro(intro);
@@ -302,7 +336,7 @@ export const actions = {
       ...state.safety,
       blockedIds: [...new Set([...state.safety.blockedIds, memberId])],
     };
-    await repository.saveSafety(safety);
+    if (!(await attempt("That change", () => repository.saveSafety(safety)))) return;
     set({ safety });
   },
 
@@ -311,7 +345,7 @@ export const actions = {
       ...state.safety,
       blockedIds: state.safety.blockedIds.filter((id) => id !== memberId),
     };
-    await repository.saveSafety(safety);
+    if (!(await attempt("That change", () => repository.saveSafety(safety)))) return;
     set({ safety });
   },
 
@@ -324,7 +358,7 @@ export const actions = {
       createdAt: new Date().toISOString(),
     };
     const safety = { ...state.safety, reports: [...state.safety.reports, report] };
-    await repository.saveSafety(safety);
+    if (!(await attempt("That change", () => repository.saveSafety(safety)))) return;
     set({ safety });
   },
 };
