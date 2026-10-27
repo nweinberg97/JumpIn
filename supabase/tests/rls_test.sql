@@ -232,11 +232,22 @@ set local request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000c';
 select pg_temp.expect((select count(*) from public.my_received_intros()) = 0, 'Cleo sees no intros she is not part of');
 commit;
 
--- Nia signs up through her link: she skips the waitlist.
+-- Someone Nia forwarded the email to signs up with their own address: the
+-- intro doesn't apply to them, so they wait like anyone else.
 insert into auth.users (id, email, raw_user_meta_data)
-values ('00000000-0000-0000-0000-0000000000e1', 'nia@example.test', '{"full_name":"Nia"}');
+values ('00000000-0000-0000-0000-0000000000f1', 'forwarded@example.test', '{"full_name":"Fran"}');
+select pg_temp.expect(public.redeem_warm_intro('hash-new', '00000000-0000-0000-0000-0000000000f1') is null,
+  'an intro only works for the email it was sent to');
+select pg_temp.expect((select status from public.memberships where member_id = '00000000-0000-0000-0000-0000000000f1') = 'waitlisted',
+  'someone with a forwarded link stays on the waitlist');
+select pg_temp.expect((select status from public.warm_intros where token_hash = 'hash-new') = 'sent',
+  'a refused attempt leaves the intro unused for Nia');
+
+-- Nia signs up through her link (with different capitalisation): she skips the waitlist.
+insert into auth.users (id, email, raw_user_meta_data)
+values ('00000000-0000-0000-0000-0000000000e1', 'Nia@Example.TEST', '{"full_name":"Nia"}');
 select pg_temp.expect(public.redeem_warm_intro('hash-new', '00000000-0000-0000-0000-0000000000e1') is not null,
-  'Nia redeems her intro');
+  'Nia redeems her intro (email match ignores capitalisation)');
 select pg_temp.expect((select status from public.memberships where member_id = '00000000-0000-0000-0000-0000000000e1') = 'approved',
   'joining through a warm intro skips the waitlist');
 select pg_temp.expect((select invited_by from public.memberships where member_id = '00000000-0000-0000-0000-0000000000e1') = '00000000-0000-0000-0000-00000000000a',

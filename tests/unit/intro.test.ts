@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
-import { decodeIntro, defaultIntroNote, encodeDemoIntro, isEmail, type IntroPayload } from "../../src/lib/intro";
+import { decodeIntro, defaultIntroNote, encodeDemoIntro, isEmail, maskEmail, type IntroPayload } from "../../src/lib/intro";
 import { isConnectorEmail } from "../../src/server/env";
 
 const payload: IntroPayload = {
@@ -37,6 +37,15 @@ describe("warm intro links", () => {
     assert.match(note, /meet Sarah/);
     assert.match(note, /John$/);
     assert.match(defaultIntroNote("", "Sarah", "John"), /^Hi there,/);
+  });
+});
+
+describe("maskEmail", () => {
+  it("keeps the first letter and the domain", () => {
+    assert.equal(maskEmail("Nia.Okafor@Example.com"), "n•••@example.com");
+  });
+  it("returns nothing for something that isn't an email", () => {
+    assert.equal(maskEmail("nia"), "");
   });
 });
 

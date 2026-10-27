@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { INTRO_TTL_MS, isEmail, type IntroPayload, type IntroProfile } from "@/lib/intro";
+import { INTRO_TTL_MS, isEmail, maskEmail, type IntroPayload, type IntroProfile } from "@/lib/intro";
 import { base64UrlEncode } from "@/lib/invite";
 import { sign } from "@/server/crypto";
 import { introEmail, sendEmail } from "@/server/email";
@@ -92,6 +92,7 @@ export async function POST(request: NextRequest) {
     subject: input.subject,
     recipientName: input.recipient.name,
     recipientIsNew: input.recipient.kind === "email",
+    recipientEmailHint: input.recipient.kind === "email" ? maskEmail(input.recipient.email) : undefined,
     note: input.note,
     expiresAt: new Date(Date.now() + INTRO_TTL_MS).toISOString(),
   };

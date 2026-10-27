@@ -1,4 +1,4 @@
-import { encodeDemoIntro, INTRO_TTL_MS, type IntroPayload } from "../intro";
+import { encodeDemoIntro, INTRO_TTL_MS, maskEmail, type IntroPayload } from "../intro";
 import type { IntroRecipient, Member, Viewer } from "../types";
 import { ApiError, api } from "./http";
 
@@ -56,6 +56,7 @@ export const introService = {
         },
         recipientName: input.recipient.name,
         recipientIsNew: input.recipient.kind === "email",
+        recipientEmailHint: input.recipient.kind === "email" ? maskEmail(input.recipient.email) : undefined,
         note: input.note,
         expiresAt: new Date(Date.now() + INTRO_TTL_MS).toISOString(),
       };

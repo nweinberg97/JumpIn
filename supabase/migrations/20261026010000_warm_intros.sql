@@ -88,13 +88,27 @@ revoke execute on function public.has_warm_intro(uuid, uuid) from public, anon, 
 
 -- A new person signs up through an intro: link them to it and let them in.
 -- Called by server code with the token from the link.
+--
+-- The intro is a vouch for one specific person, so it only counts when they
+-- signed in with the email it was sent to (compared case-insensitively,
+-- against the address their sign-in provider confirmed). Anyone else holding
+-- the link can still join JumpIn, through the normal waitlist, and the intro
+-- stays unused for its rightful recipient.
 create function public.redeem_warm_intro(token_sha256 text, new_member uuid)
 returns uuid language plpgsql security definer set search_path = '' as $$
 declare
   intro public.warm_intros;
+  signed_in_email text;
 begin
+  select u.email into signed_in_email from auth.users u where u.id = new_member;
+  if signed_in_email is null then
+    return null;
+  end if;
   select * into intro from public.warm_intros
-   where token_hash = token_sha256 and recipient_email is not null and joined_member_id is null
+   where token_hash = token_sha256
+     and recipient_email is not null
+     and joined_member_id is null
+     and lower(recipient_email) = lower(signed_in_email)
    for update;
   if not found then
     return null;

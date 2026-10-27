@@ -91,8 +91,17 @@ export default function IntroPage() {
                 </Link>
               </div>
               <p className="intro-skip">
-                <Icon name="link2" size={15} /> JumpIn is a private network for people building a better world.{" "}
-                {from} is a Connector, so you can join straight away. No waitlist.
+                <Icon name="link2" size={15} />
+                <span>
+                  JumpIn is a private network for people building a better world. {from} is a Connector, so you can
+                  join straight away. No waitlist.
+                  {payload.recipientEmailHint && (
+                    <>
+                      {" "}
+                      Sign in with the email this intro was sent to, <strong>{payload.recipientEmailHint}</strong>.
+                    </>
+                  )}
+                </span>
               </p>
             </>
           ) : (

@@ -29,6 +29,12 @@ export interface IntroPayload {
   recipientName: string;
   /** True when the recipient isn't on JumpIn yet: the link lets them join. */
   recipientIsNew: boolean;
+  /**
+   * For a new recipient: the address the intro was sent to, masked
+   * ("n•••@example.com"), so they sign in with the right account. The intro
+   * only skips the waitlist for that email.
+   */
+  recipientEmailHint?: string;
   note: string;
   /** ISO time the link stops working. */
   expiresAt: string;
@@ -39,6 +45,13 @@ export const INTRO_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 export const isEmail = (s: string) => EMAIL.test(s.trim()) && s.trim().length <= 254;
+
+/** "nia.okafor@example.com" → "n•••@example.com". Keeps the domain so people recognise which inbox. */
+export function maskEmail(email: string) {
+  const [local, domain] = email.trim().toLowerCase().split("@");
+  if (!local || !domain) return "";
+  return `${local[0]}•••@${domain}`;
+}
 
 export function encodeDemoIntro(payload: IntroPayload) {
   return `${base64UrlEncode(JSON.stringify(payload))}.demo`;

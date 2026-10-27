@@ -53,7 +53,7 @@ export function introEmail(payload: IntroPayload, links: { view: string }) {
     : "";
   const cta = payload.recipientIsNew ? `Meet ${escape(subjectFirst)} on JumpIn` : `See ${escape(subjectFirst)}'s profile`;
   const joinLine = payload.recipientIsNew
-    ? `<tr><td style="padding:0 32px 20px;font-size:13px;color:#4A4F5C">JumpIn is a private network for people building a better world. ${escape(from)} is a Connector, so you can join without waiting for an invite.</td></tr>`
+    ? `<tr><td style="padding:0 32px 20px;font-size:13px;color:#4A4F5C">JumpIn is a private network for people building a better world. ${escape(from)} is a Connector, so you can join without waiting for an invite. Sign in with this email address so the intro counts.</td></tr>`
     : "";
   const html = `<!doctype html><html><body style="margin:0;background:#F7F5F0;padding:32px 16px;font-family:Arial,sans-serif;color:#14161C">
 <table role="presentation" width="100%" style="max-width:560px;margin:0 auto;background:#fff;border-radius:16px;border:1px solid #E4E1D8">

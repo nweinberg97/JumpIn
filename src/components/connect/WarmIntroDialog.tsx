@@ -130,7 +130,8 @@ export function WarmIntroDialog({ member, onClose }: { member: Member; onClose: 
                   <input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={254} autoComplete="off" />
                 </label>
                 <p className="fine-print intro__vouch">
-                  <Icon name="link2" size={14} /> Because you&apos;re a Connector, they can join JumpIn straight away. No waitlist.
+                  <Icon name="link2" size={14} /> Because you&apos;re a Connector, they can join JumpIn straight away with this
+                  email. No waitlist.
                 </p>
               </div>
             ) : (

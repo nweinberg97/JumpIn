@@ -24,7 +24,7 @@ A sign-up trigger turns each new auth user into a waitlisted member.
 `20261026010000_warm_intros.sql` adds the Connector badge (`members.is_connector`,
 granted only through `grant_connector()` by the server) and warm intros. Someone
 who joins through a Connector's intro link is approved straight away
-(`redeem_warm_intro()`); each link works once.
+(`redeem_warm_intro()`), but only if they sign in with the email the intro was sent to; each link works once.
 `expire_stale_state()` closes expired "open" windows and unanswered invites;
 on Supabase it is scheduled every minute with `pg_cron`.
 
@@ -36,7 +36,7 @@ npm run test:db
 
 Spins up a throwaway Postgres (15+), applies the migrations on top of a small
 Supabase stand-in (`tests/supabase_stub.sql`), and runs `tests/rls_test.sql`:
-60 checks that each person sees and changes only what they should. CI runs
+63 checks that each person sees and changes only what they should. CI runs
 the same thing on every pull request.
 
 ## Apply it to a real project (later)
