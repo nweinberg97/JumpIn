@@ -12,7 +12,7 @@ Two lists:
 - [ ] **Supabase.** At supabase.com, create a new organization called `JumpIn` (Free plan, separate from Kitside). Then in claude.ai → Settings → Connectors → Supabase, reconnect and allow the `JumpIn` organization.
 - [ ] **Vercel.** At vercel.com, sign in with GitHub → Add New → Project → `nweinberg97/JumpIn` → Deploy. Then Settings → Git → set the production branch to `backend-foundations`.
 - [ ] **Google Cloud.** At console.cloud.google.com, create a project called `JumpIn`. Set up the OAuth consent screen: External, app name JumpIn, your email as contact. Stop there; we'll do the rest together.
-- [ ] **LinkedIn.** Create a LinkedIn Page for JumpIn. At developer.linkedin.com, create an app linked to that Page, and add the product "Sign In with LinkedIn using OpenID Connect". Stop there.
+- [ ] *(Optional, can wait)* **LinkedIn.** Sign-in is Google-only for now; you verify people yourself with the "Mark as verified" button. When you want LinkedIn sign-in later: create a LinkedIn Page for JumpIn, then an app at developer.linkedin.com linked to it, and add "Sign In with LinkedIn using OpenID Connect".
 - [ ] **Security basics.** Turn on two-factor sign-in for GitHub, Supabase, Vercel, Google and LinkedIn.
 - [ ] **Optional, saves you copying logs:** in claude.ai → Settings → Connectors, add **Vercel** and **Resend**.
 
@@ -28,7 +28,7 @@ Before launch day (not needed for onboarding):
 - [ ] **1. Database.** Claude creates the Supabase project, loads the database and runs Supabase's security check. *You: say "go".*
 - [ ] **2. Keys into Vercel.** Claude gives you the 6 setting names and the non-secret values. You copy the one secret value (the Supabase secret key) straight from Supabase into Vercel, then redeploy.
 - [ ] **3. Google sign-in.** Claude gives you the exact redirect URLs. You create the OAuth client in Google Cloud and paste its ID and secret into Supabase. Claude checks it's switched on.
-- [ ] **4. LinkedIn sign-in.** Same pattern: Claude gives you the redirect URL; you paste the app's ID and secret into Supabase.
+- [ ] *(Optional, later)* **4. LinkedIn sign-in.** Same pattern: Claude gives you the redirect URL; you paste the app's ID and secret into Supabase. Then set `NEXT_PUBLIC_LINKEDIN_SIGNIN` to `on` in Vercel.
 - [ ] **5. First test.** You sign in on your Vercel site and try the onboarding flow with a second account. Claude watches the logs and the database, and fixes anything that breaks.
 
 Before launch day:
@@ -58,14 +58,30 @@ That's all the setup is: one URL into Google or LinkedIn, two values into Supaba
 
 ---
 
+## Blanks to fill in: send these to Claude
+
+These are left blank in the code on purpose. The app works without them, using neutral wording until they're filled in. Send Claude the answers; none of them are secret.
+
+- [ ] **Your name as it should sign the emails**, e.g. "Nathan, founder of JumpIn". Until then: "The JumpIn team".
+- [ ] **A contact email for members.** It's shown in emails and the privacy policy. A domain address like hello@yourdomain.com is best once you have the domain.
+- [ ] **Legal name for the privacy policy and terms:** your own name, or your company's.
+- [ ] **Jurisdiction:** currently "British Columbia, Canada". Confirm it, or tell Claude what it should be.
+- [ ] **The date the policies take effect.** Until it's set, the pages say "Draft: not yet in effect".
+- [ ] **Read the drafts** at /privacy and /terms, and every email at /email-previews. Tell Claude what to change. The policies are a starting point, not legal advice, so have someone qualified glance at them before launch.
+- [ ] **The email you'll sign in with**, for `ADMIN_EMAILS` (you set it in Vercel).
+- [ ] **The launch date.** You set it yourself on the founder page.
+
+---
+
 ## Claude: code still to build (nothing needed from you)
 
-For onboarding week:
+Done for onboarding week:
 
-- [ ] People who join through a warm intro skip the waitlist.
-- [ ] A Verified badge for people who sign in with LinkedIn.
-- [ ] A clear message when a profile save fails.
-- [ ] Privacy policy and terms pages, for you to approve.
+- [x] People who join through a warm intro skip the waitlist (the Connector gets an email when it works).
+- [x] "Mark as verified" on the founder page, with a link to check their LinkedIn. LinkedIn sign-ins are verified automatically.
+- [x] A clear message whenever a save fails.
+- [x] Draft privacy policy and terms pages.
+- [x] All the emails: waitlist, welcome, Connector, warm intros, invites and launch. Preview them at /email-previews.
 
 Before launch:
 
