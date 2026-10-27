@@ -4466,3 +4466,286 @@ textarea.input {
     scroll-behavior: auto !important;
   }
 }
+
+/* ==========================================================================
+   Warm intros + Connector badge
+   ========================================================================== */
+
+.connector-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 11px 0 9px;
+  border-radius: 999px;
+  background: var(--mint-soft);
+  border: 1px solid var(--mint);
+  font-family: var(--body);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--mint-deep);
+  white-space: nowrap;
+}
+
+.connector-chip--compact {
+  height: 22px;
+  width: 22px;
+  padding: 0;
+  justify-content: center;
+}
+
+.pcard__connector {
+  display: inline-flex;
+  color: var(--mint-deep);
+}
+
+/* Profile: the Connector's way in. */
+.intro-cta {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border-radius: var(--r-lg);
+  background: var(--mint-soft);
+  border: 1.5px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--mint);
+}
+
+.intro-cta__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--mint-deep);
+}
+
+.intro-cta__copy {
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.intro-cta .btn {
+  background: #fff;
+}
+
+/* Dialog */
+.intro .jump__pair {
+  margin-bottom: 4px;
+}
+
+.intro__someone {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 2px dashed var(--line-2);
+  color: var(--ink-3);
+  background: #fff;
+}
+
+.seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+}
+
+.seg__opt {
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 650;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.seg__opt--on {
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 1px 0 rgba(21, 23, 29, 0.06), 0 4px 12px -6px rgba(21, 23, 29, 0.25);
+}
+
+.seg__opt:focus-visible {
+  outline: 2px solid var(--peri);
+  outline-offset: 2px;
+}
+
+.intro__fields {
+  display: grid;
+  gap: 12px;
+}
+
+.intro__vouch {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 6px;
+  text-align: left;
+  color: var(--mint-deep);
+}
+
+.intro__vouch svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+.intro__picker {
+  list-style: none;
+  margin: -4px 0 0;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  max-height: 232px;
+  overflow: auto;
+}
+
+.intro__picker button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.intro__picker button:hover,
+.intro__picker button:focus-visible {
+  background: var(--peri-soft);
+  outline: none;
+}
+
+.intro__picker span {
+  display: grid;
+  min-width: 0;
+}
+
+.intro__picker strong {
+  font-size: 14.5px;
+}
+
+.intro__picker small {
+  font-size: 13px;
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.intro__none {
+  padding: 10px;
+  font-size: 14px;
+  color: var(--ink-3);
+}
+
+.form-error {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fbe3e3;
+  color: var(--danger);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Recipient page */
+.intro-card {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  margin: 20px 0 14px;
+  padding: 18px;
+  border-radius: var(--r-lg);
+  background: var(--peri-soft);
+  border: 1.5px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--peri);
+}
+
+.intro-card__text {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.intro-card__name {
+  font-family: var(--display);
+  font-size: 22px;
+  line-height: 1.15;
+}
+
+.intro-card__place {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.intro-card__headline {
+  font-size: 15.5px;
+  font-weight: 550;
+}
+
+.intro-card__what {
+  font-size: 14.5px;
+  color: var(--ink-2);
+}
+
+.intro-by {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+  font-size: 14.5px;
+  color: var(--ink-2);
+}
+
+.intro-skip {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-top: 14px;
+  font-size: 14px;
+  color: var(--mint-deep);
+}
+
+.intro-skip svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+/* Connections list */
+.conn--intro {
+  border-color: var(--mint);
+}
+
+.conn__text strong svg {
+  vertical-align: -2px;
+  color: var(--ink-3);
+}
+
+.conn__badge--intro {
+  background: var(--mint-soft);
+  color: var(--mint-deep);
+}
+
+@media (max-width: 560px) {
+  .intro-card {
+    flex-direction: column;
+  }
+}

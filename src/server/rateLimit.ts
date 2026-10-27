@@ -27,6 +27,7 @@ export interface Limit {
 export const LIMITS = {
   invite: { max: 10, windowSeconds: 60 * 60 },
   meeting: { max: 30, windowSeconds: 60 * 60 },
+  intro: { max: 20, windowSeconds: 24 * 60 * 60 },
 } satisfies Record<string, Limit>;
 
 /** Counts one use of `action` by `subject`; false once the limit is reached. */

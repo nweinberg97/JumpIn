@@ -1,6 +1,7 @@
 import "server-only";
 import type { NextRequest, NextResponse } from "next/server";
 import { seal, unseal } from "./crypto";
+import { isConnectorEmail } from "./env";
 
 /**
  * Server session, stored as an encrypted httpOnly cookie. No database: the
@@ -57,5 +58,7 @@ export function publicSession(data: ServerSessionData) {
     },
     profile: data.profile,
     instagramHandle: data.instagram?.username,
+    /** Holds the Connector badge (can send warm intros). */
+    connector: data.profile.emailVerified !== false && isConnectorEmail(data.profile.email),
   };
 }

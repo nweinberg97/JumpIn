@@ -11,6 +11,8 @@ export interface ServerSession {
   linked: { linkedin: boolean; google: boolean; instagram: boolean };
   profile: { sub: string; name: string; email?: string; picture?: string; emailVerified?: boolean };
   instagramHandle?: string;
+  /** Holds the Connector badge: may send warm intros. */
+  connector?: boolean;
 }
 
 function go(path: string, returnTo: string, extra: Record<string, string> = {}) {

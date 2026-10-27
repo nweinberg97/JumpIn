@@ -25,6 +25,7 @@ const weekdays = (start: string, end: string): Array<[Day, string, string]> =>
 const SEED: SeedMember[] = [
   {
     id: "maddison",
+    isConnector: true,
     name: "Maddison Hale",
     avatarUrl: unsplash("1494790108377-be9c29b29330"),
     headline:
@@ -102,6 +103,7 @@ const SEED: SeedMember[] = [
   },
   {
     id: "sarah",
+    isConnector: true,
     name: "Sarah Chen",
     avatarUrl: unsplash("1580489944761-15a19d654956"),
     headline: "Product designer building tools for climate action.",
@@ -770,6 +772,8 @@ export function buildDemoViewer(now = Date.now()): Viewer {
     calendarConnected: false,
     jumpInPolicy: "anyone",
     verified: true,
+    // The demo account is a Connector, so the warm intro flow can be tried.
+    isConnector: true,
     joinedAt: new Date(now - days(30)).toISOString(),
     profileHidden: false,
     onboarded: true,

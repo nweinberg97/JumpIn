@@ -52,6 +52,11 @@ export function PhotoCard({ member, priority }: { member: Member; priority?: boo
             <LinkedInMark size={17} />
           </span>
         )}
+        {member.isConnector && (
+          <span className="pcard__connector" title="Connector: trusted to make warm intros">
+            <Icon name="link2" size={15} />
+          </span>
+        )}
         <span className="pcard__tags">
           {member.impactAreas.slice(0, 2).map((t) => (
             <span key={t} className="tag tag--outline tag--xs">

@@ -180,4 +180,76 @@ select pg_temp.expect_denied(
   'members cannot reset or spend rate limits themselves');
 commit;
 
+-- ── Warm intros ─────────────────────────────────────────────────────────────
+-- Ava becomes a Connector and introduces Ben to Hana (a member) and to Nia,
+-- who isn't on JumpIn yet.
+
+begin;
+set local role authenticated;
+set local request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
+select pg_temp.expect_denied('update public.members set is_connector = true where id = auth.uid()',
+  'a member cannot give themselves the Connector badge');
+select pg_temp.expect_denied('select public.grant_connector(auth.uid())', 'a member cannot call grant_connector');
+commit;
+
+select public.grant_connector('00000000-0000-0000-0000-00000000000a');
+select pg_temp.expect((select is_connector from public.members where id = '00000000-0000-0000-0000-00000000000a'),
+  'the founder grants Ava the Connector badge');
+
+begin;
+set local role service_role;
+insert into public.warm_intros (id, introducer_id, subject_id, recipient_member_id, recipient_name, note, token_hash)
+values ('20000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000b',
+        '00000000-0000-0000-0000-0000000000a1', 'Hana', 'You two should talk about community energy.', 'hash-member');
+insert into public.warm_intros (id, introducer_id, subject_id, recipient_email, recipient_name, note, token_hash)
+values ('20000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000b',
+        'nia@example.test', 'Nia', 'Ben is the person I told you about.', 'hash-new');
+select pg_temp.expect_denied(
+  'insert into public.warm_intros (introducer_id, subject_id, recipient_name, note, token_hash) values (''00000000-0000-0000-0000-00000000000a'', ''00000000-0000-0000-0000-00000000000b'', ''Nobody'', ''x'', ''h3'')',
+  'an intro needs exactly one recipient (a member or an email)');
+commit;
+
+begin;
+set local role authenticated;
+set local request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
+select pg_temp.expect((select count(*) from public.warm_intros) = 2, 'Ava sees both intros she made');
+select pg_temp.expect((select is_connector from public.members where id = auth.uid()), 'members can see who is a Connector');
+select pg_temp.expect_denied(
+  'insert into public.warm_intros (introducer_id, subject_id, recipient_email, recipient_name, note, token_hash) values (auth.uid(), ''00000000-0000-0000-0000-00000000000b'', ''x@example.test'', ''X'', ''hi'', ''h4'')',
+  'intros are created by the server, not directly by members');
+commit;
+
+begin;
+set local role authenticated;
+set local request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000b';
+select pg_temp.expect((select count(*) from public.warm_intros) = 0, 'Ben cannot read the intro table (it holds Nia''s email)');
+select pg_temp.expect((select count(*) from public.my_received_intros()) = 2, 'Ben sees both intros about him, without emails');
+commit;
+
+begin;
+set local role authenticated;
+set local request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000c';
+select pg_temp.expect((select count(*) from public.my_received_intros()) = 0, 'Cleo sees no intros she is not part of');
+commit;
+
+-- Nia signs up through her link: she skips the waitlist.
+insert into auth.users (id, email, raw_user_meta_data)
+values ('00000000-0000-0000-0000-0000000000e1', 'nia@example.test', '{"full_name":"Nia"}');
+select pg_temp.expect(public.redeem_warm_intro('hash-new', '00000000-0000-0000-0000-0000000000e1') is not null,
+  'Nia redeems her intro');
+select pg_temp.expect((select status from public.memberships where member_id = '00000000-0000-0000-0000-0000000000e1') = 'approved',
+  'joining through a warm intro skips the waitlist');
+select pg_temp.expect((select invited_by from public.memberships where member_id = '00000000-0000-0000-0000-0000000000e1') = '00000000-0000-0000-0000-00000000000a',
+  'Nia is recorded as invited by Ava');
+select pg_temp.expect(public.redeem_warm_intro('hash-new', '00000000-0000-0000-0000-00000000000d') is null,
+  'an intro link works only once (Dev cannot reuse it to skip the waitlist)');
+select pg_temp.expect(public.has_warm_intro('00000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-0000000000e1'),
+  'Ben and Nia now count as warmly introduced');
+
+begin;
+set local role authenticated;
+set local request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
+select pg_temp.expect_denied('select public.redeem_warm_intro(''hash-member'', auth.uid())', 'members cannot redeem intros directly');
+commit;
+
 \warn 'All RLS tests passed.'

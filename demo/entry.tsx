@@ -13,6 +13,7 @@ import Landing from "@/app/page";
 import Onboarding from "@/app/onboarding/page";
 import AuthComplete from "@/app/auth/complete/page";
 import Invite from "@/app/invite/[token]/page";
+import Intro from "@/app/intro/[token]/page";
 import AppLayout from "@/app/(app)/layout";
 import Discover from "@/app/(app)/discover/page";
 import Profile from "@/app/(app)/people/[id]/page";
@@ -27,6 +28,7 @@ const routes: Route[] = [
   [/^\/onboarding$/, Onboarding, false, []],
   [/^\/auth\/complete$/, AuthComplete, false, []],
   [/^\/invite\/([^/]+)$/, Invite, false, ["token"]],
+  [/^\/intro\/([^/]+)$/, Intro, false, ["token"]],
   [/^\/discover$/, Discover, true, []],
   [/^\/people\/([^/]+)$/, Profile, true, ["id"]],
   [/^\/connections$/, Connections, true, []],

@@ -14,6 +14,7 @@ import type {
   SafetyState,
   Session,
   Viewer,
+  WarmIntro,
 } from "./types";
 
 /**
@@ -28,6 +29,7 @@ export interface AppState {
   viewer: Viewer | null;
   members: Member[];
   connections: Connection[];
+  intros: WarmIntro[];
   safety: SafetyState;
   integrations: IntegrationStatus;
 }
@@ -38,6 +40,7 @@ let state: AppState = {
   viewer: null,
   members: [],
   connections: [],
+  intros: [],
   safety: { blockedIds: [], reports: [] },
   integrations: { linkedin: false, google: false, instagram: false, email: false },
 };
@@ -59,14 +62,15 @@ const getSnapshot = () => state;
 let loading: Promise<void> | null = null;
 
 async function load() {
-  const [session, viewer, members, connections, safety] = await Promise.all([
+  const [session, viewer, members, connections, intros, safety] = await Promise.all([
     repository.getSession(),
     repository.getViewer(),
     repository.listMembers(),
     repository.listConnections(),
+    repository.listIntros(),
     repository.getSafety(),
   ]);
-  set({ ready: true, session, viewer, members, connections, safety });
+  set({ ready: true, session, viewer, members, connections, intros, safety });
   getIntegrationStatus().then((integrations) => set({ integrations }));
 }
 
@@ -142,6 +146,8 @@ export const actions = {
           verified: existing!.verified || server.linked.linkedin,
           calendarConnected: existing!.calendarConnected || server.linked.google,
         };
+    // The Connector badge is the server's call, never the browser's.
+    viewer.isConnector = Boolean(server.connector);
     if (server.linked.google) viewer.calendarConnected = true;
     await repository.saveViewer(viewer);
     if (fresh) {
@@ -207,6 +213,13 @@ export const actions = {
   },
 
   newConnectionId: () => uid("c"),
+  newIntroId: () => uid("i"),
+
+  async saveIntro(intro: WarmIntro) {
+    await repository.saveIntro(intro);
+    set({ intros: await repository.listIntros() });
+    return intro;
+  },
 
   async updateConnection(id: string, patch: Partial<Connection>) {
     const existing = state.connections.find((c) => c.id === id);
