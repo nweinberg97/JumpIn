@@ -22,6 +22,17 @@ export default function AuthComplete() {
       const next = params.get("next");
       const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : null;
 
+      // Live: Supabase already set the session cookie (see /auth/callback).
+      if (params.get("live") || (linking && authService.liveSignIn)) {
+        const viewer = await actions.reload();
+        if (!viewer) {
+          setError(true);
+          return;
+        }
+        router.replace(!viewer.onboarded ? "/onboarding" : (safeNext ?? "/discover"));
+        return;
+      }
+
       const server = await authService.fetchServerSession();
       if (!server) {
         setError(true);

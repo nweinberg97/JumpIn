@@ -173,6 +173,23 @@ export interface Session {
   createdAt: ISODateString;
 }
 
+/**
+ * This deployment and this person. Demo mode: everything open.
+ * Live: before launch only the founder (admin) can start calls; members
+ * waiting to be approved see a holding screen.
+ */
+export interface AppAccess {
+  /** The real backend (Supabase) is switched on. */
+  live: boolean;
+  /** When calls open, if a date is set. ISO. */
+  launchAt: string | null;
+  /** Calls are open now (countdown ended, or opened early). */
+  open: boolean;
+  /** The founder: sees the admin page, can test calls before launch. */
+  admin: boolean;
+  membership: "waitlisted" | "approved" | "suspended" | null;
+}
+
 /** Which real integrations the server has credentials for. Booleans only. */
 export interface IntegrationStatus {
   linkedin: boolean;

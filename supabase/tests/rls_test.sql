@@ -263,4 +263,32 @@ set local request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
 select pg_temp.expect_denied('select public.redeem_warm_intro(''hash-member'', auth.uid())', 'members cannot redeem intros directly');
 commit;
 
+-- ── Launch settings ─────────────────────────────────────────────────────────
+
+begin;
+set local role anon;
+select pg_temp.expect((select count(*) from public.launch_settings) = 1, 'anyone can read the launch date (for the countdown)');
+select pg_temp.expect(not public.is_launched(), 'nothing is open before a launch date is set');
+select pg_temp.expect_denied('select launch_email_sent_at from public.launch_settings', 'internal launch fields stay private');
+commit;
+
+begin;
+set local role authenticated;
+set local request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
+select pg_temp.expect_denied('update public.launch_settings set opened_at = now()', 'members cannot open calls themselves');
+commit;
+
+update public.launch_settings set launch_at = now() + interval '3 days';
+select pg_temp.expect(not public.is_launched(), 'before the countdown ends, calls stay closed');
+update public.launch_settings set launch_at = now() - interval '1 minute';
+select pg_temp.expect(public.is_launched(), 'when the countdown ends, calls open');
+update public.launch_settings set launch_at = now() + interval '3 days', opened_at = now();
+select pg_temp.expect(public.is_launched(), 'the founder can open early');
+update public.launch_settings set launch_at = null, opened_at = null;
+
+select pg_temp.expect(
+  (select public.profile_gaps(m) from public.members m where m.id = '00000000-0000-0000-0000-00000000000d')
+    = array['photo', 'headline', 'what I do', 'about', 'impact areas', 'onboarding'],
+  'profile_gaps lists what a new member still needs');
+
 \warn 'All RLS tests passed.'

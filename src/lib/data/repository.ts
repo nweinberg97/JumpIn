@@ -33,4 +33,7 @@ export interface JumpInRepository {
 
   /** Wipe local state (demo reset / sign out of the prototype). */
   reset(): Promise<void>;
+
+  /** Live updates (who's online, status changes). Returns an unsubscribe. */
+  subscribe?(onChange: () => void): () => void;
 }

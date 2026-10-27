@@ -4,8 +4,10 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { repository } from "./data";
 import { buildDemoConnections, buildDemoViewer, buildNewViewer } from "./data/seed";
 import { authService, type ServerSession } from "./services/authService";
+import { api } from "./services/http";
 import { getIntegrationStatus } from "./services/integrationService";
 import type {
+  AppAccess,
   AvailabilityStatus,
   Connection,
   IntegrationStatus,
@@ -32,7 +34,14 @@ export interface AppState {
   intros: WarmIntro[];
   safety: SafetyState;
   integrations: IntegrationStatus;
+  /** "live" = the real database; "demo" = seeded members in this browser. */
+  mode: "demo" | "live";
+  /** Launch countdown, approval and founder access (see AppAccess). */
+  access: AppAccess;
 }
+
+/** The demo is always fully open: it's for practising. */
+export const DEMO_ACCESS: AppAccess = { live: false, launchAt: null, open: true, admin: false, membership: "approved" };
 
 let state: AppState = {
   ready: false,
@@ -43,6 +52,8 @@ let state: AppState = {
   intros: [],
   safety: { blockedIds: [], reports: [] },
   integrations: { linkedin: false, google: false, instagram: false, email: false },
+  mode: "demo",
+  access: DEMO_ACCESS,
 };
 
 const listeners = new Set<() => void>();
@@ -61,7 +72,37 @@ const getSnapshot = () => state;
 
 let loading: Promise<void> | null = null;
 
+let unsubscribe: (() => void) | null = null;
+let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+
+/** Someone's status changed, or someone came online: refresh what's shown. */
+function scheduleRefresh() {
+  if (refreshTimer) return;
+  refreshTimer = setTimeout(async () => {
+    refreshTimer = null;
+    try {
+      const [members, connections] = await Promise.all([repository.listMembers(), repository.listConnections()]);
+      set({ members, connections });
+    } catch {
+      /* transient: the next change will try again */
+    }
+  }, 400);
+}
+
+async function loadAccess(mode: "demo" | "live"): Promise<AppAccess> {
+  if (mode === "demo") return DEMO_ACCESS;
+  try {
+    return await api<AppAccess>("/api/app-state");
+  } catch {
+    return { live: true, launchAt: null, open: false, admin: false, membership: null };
+  }
+}
+
 async function load() {
+  const mode = await repository.resolve();
+  unsubscribe?.();
+  unsubscribe = repository.subscribe(scheduleRefresh);
+  const accessP = loadAccess(mode);
   const [session, viewer, members, connections, intros, safety] = await Promise.all([
     repository.getSession(),
     repository.getViewer(),
@@ -70,7 +111,7 @@ async function load() {
     repository.listIntros(),
     repository.getSafety(),
   ]);
-  set({ ready: true, session, viewer, members, connections, intros, safety });
+  set({ ready: true, session, viewer, members, connections, intros, safety, mode, access: await accessP });
   getIntegrationStatus().then((integrations) => set({ integrations }));
 }
 
@@ -91,6 +132,7 @@ async function saveViewer(viewer: Viewer) {
 export const actions = {
   /** Demo sign-in: a complete profile and a little history, no credentials. */
   async signInDemo() {
+    repository.enterDemo();
     const now = Date.now();
     await repository.reset();
     const session: Session = {
@@ -109,6 +151,7 @@ export const actions = {
 
   /** Demo sign-in with a blank profile, to try onboarding without OAuth. */
   async signInDemoFresh() {
+    repository.enterDemo();
     const now = Date.now();
     await repository.reset();
     await repository.saveSession({
@@ -175,14 +218,29 @@ export const actions = {
     return state.viewer;
   },
 
+  /** Reload everything, e.g. right after a real sign-in. */
+  async reload() {
+    loading = load();
+    await loading;
+    return state.viewer;
+  },
+
   async signOut() {
-    await authService.signOut();
+    // Leaving the demo on the live site keeps the real account signed in.
+    const leavingDemo = state.mode === "demo";
+    if (leavingDemo) await authService.signOutPrototype();
+    else await authService.signOut();
     await repository.saveSession(null);
     set({ session: null });
+    // Back to the real account, if there is one signed in underneath.
+    if (leavingDemo && repository.live) {
+      loading = load();
+      await loading;
+    }
   },
 
   async resetDemo() {
-    await authService.signOut();
+    await authService.signOutPrototype();
     await repository.reset();
     loading = load();
     await loading;
@@ -212,7 +270,8 @@ export const actions = {
     return connection;
   },
 
-  newConnectionId: () => uid("c"),
+  newConnectionId: () =>
+    typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : uid("c"),
   newIntroId: () => uid("i"),
 
   async saveIntro(intro: WarmIntro) {

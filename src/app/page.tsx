@@ -7,6 +7,7 @@ import { Avatar, Portrait } from "@/components/Avatar";
 import { GoogleMark, Icon, InstagramMark, JumpInLogo, LinkedInMark } from "@/components/Icon";
 import { photo, SCENE_PHOTOS, unsplash } from "@/lib/data/photos";
 import { buildSeedMembers } from "@/lib/data/seed";
+import { LaunchCountdownLine } from "@/components/Launch";
 import { authService } from "@/lib/services/authService";
 import { actions, useJumpIn } from "@/lib/store";
 
@@ -189,6 +190,7 @@ export default function Landing() {
           </p>
 
           {notice && <p className="callout callout--warn">{notice}</p>}
+          <LaunchCountdownLine />
 
           {signedIn ? (
             <Link href="/discover" className="btn btn--jump btn--wide btn--lg">
@@ -199,18 +201,18 @@ export default function Landing() {
               <button
                 className="btn btn--linkedin btn--wide btn--lg"
                 onClick={() => authService.continueWithLinkedIn()}
-                disabled={!integrations.linkedin}
+                disabled={!integrations.linkedin && !authService.liveSignIn}
               >
                 <LinkedInMark size={20} /> Continue with LinkedIn
               </button>
               <button
                 className="btn btn--outline btn--wide btn--lg"
                 onClick={() => authService.continueWithGoogle()}
-                disabled={!integrations.google}
+                disabled={!integrations.google && !authService.liveSignIn}
               >
                 <GoogleMark size={20} /> Continue with Google
               </button>
-              {(!integrations.linkedin || !integrations.google) && (
+              {!authService.liveSignIn && (!integrations.linkedin || !integrations.google) && (
                 <p className="setup-note">
                   {!integrations.linkedin && !integrations.google
                     ? "LinkedIn and Google sign-in need credentials"

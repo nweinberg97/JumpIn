@@ -4,9 +4,21 @@ import { base64UrlEncode } from "@/lib/invite";
 import { sign } from "@/server/crypto";
 import { introEmail, sendEmail } from "@/server/email";
 import { env, integrationStatus, isConnectorEmail, originFor } from "@/server/env";
-import { deliverableEmailFor } from "@/server/memberDirectory";
+import { createHash, randomUUID } from "node:crypto";
+import { isUuid } from "@/lib/data/rows";
+import { adminClient } from "@/lib/supabase/server";
+import { identify, memberCard, type Identity } from "@/server/identity";
+import { emailForMember } from "@/server/memberDirectory";
 import { take } from "@/server/rateLimit";
-import { readSession } from "@/server/session";
+
+/** Connector badge: the database flag (live), or CONNECTOR_EMAILS. */
+async function isConnector(me: Identity) {
+  if (me.emailVerified && isConnectorEmail(me.email)) return true;
+  if (!me.live) return false;
+  const db = adminClient();
+  const { data } = (await db?.from("members").select("is_connector").eq("id", me.id).maybeSingle()) ?? { data: null };
+  return (data as { is_connector: boolean } | null)?.is_connector === true;
+}
 
 export const dynamic = "force-dynamic";
 
@@ -70,26 +82,38 @@ export async function POST(request: NextRequest) {
   if (!env.sessionSecret()) {
     return NextResponse.json({ error: "Warm intros are in demo mode", code: "not_configured" }, { status: 501 });
   }
-  const session = readSession(request);
-  if (!session) {
+  const me = await identify(request);
+  if (!me) {
     return NextResponse.json({ error: "Sign in to send warm intros", code: "not_signed_in" }, { status: 401 });
   }
-  if (session.profile.emailVerified === false || !isConnectorEmail(session.profile.email)) {
+  if (!(await isConnector(me))) {
     return NextResponse.json({ error: "Only Connectors can send warm intros", code: "not_connector" }, { status: 403 });
   }
   const input = parse(await request.json().catch(() => null));
   if (!input) {
     return NextResponse.json({ error: "Incomplete intro", code: "invalid" }, { status: 400 });
   }
-  if (!take(session.profile.sub, "intro")) {
+  if (!take(me.id, "intro")) {
     return NextResponse.json({ error: "That's a lot of intros for one day. Try again tomorrow.", code: "rate_limited" }, { status: 429 });
   }
 
+  // Live: the profile shown comes from the database, not the request.
+  let subject = input.subject;
+  const recipientId = input.recipient.kind === "member" ? input.recipient.memberId : null;
+  if (me.live) {
+    if (!isUuid(subject.id) || (recipientId && !isUuid(recipientId)) || subject.id === me.id) {
+      return NextResponse.json({ error: "Invalid intro", code: "invalid" }, { status: 400 });
+    }
+    const card = await memberCard(subject.id);
+    if (!card) return NextResponse.json({ error: "That member isn't available", code: "invalid" }, { status: 400 });
+    subject = { ...subject, name: card.name, headline: card.headline, avatarUrl: card.avatarUrl };
+  }
+
   const payload: IntroPayload = {
-    introId: input.introId,
-    fromName: session.profile.name,
-    fromAvatarUrl: session.profile.picture,
-    subject: input.subject,
+    introId: me.live ? randomUUID() : input.introId,
+    fromName: me.name,
+    fromAvatarUrl: me.picture,
+    subject,
     recipientName: input.recipient.name,
     recipientIsNew: input.recipient.kind === "email",
     recipientEmailHint: input.recipient.kind === "email" ? maskEmail(input.recipient.email) : undefined,
@@ -100,10 +124,28 @@ export async function POST(request: NextRequest) {
   const token = `${body}.${sign(body)}`;
   const origin = originFor(request);
 
+  // Live: record the intro with a hash of its link (never the link itself),
+  // which is how the new person's sign-up is matched to it later.
+  if (me.live) {
+    const db = adminClient();
+    if (!db) return NextResponse.json({ error: "No database configured", code: "not_configured" }, { status: 501 });
+    const { error } = await db.from("warm_intros").insert({
+      id: payload.introId,
+      introducer_id: me.id,
+      subject_id: subject.id,
+      recipient_member_id: recipientId,
+      recipient_email: input.recipient.kind === "email" ? input.recipient.email : null,
+      recipient_name: input.recipient.name,
+      note: input.note,
+      token_hash: createHash("sha256").update(token).digest("hex"),
+    });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
   // Where the email goes. INVITE_TEST_RECIPIENT, when set, catches everything.
   const testInbox = env.email()?.testRecipient;
   const to =
-    input.recipient.kind === "member" ? deliverableEmailFor(input.recipient.memberId) : testInbox ?? input.recipient.email;
+    input.recipient.kind === "member" ? await emailForMember(input.recipient.memberId) : testInbox ?? input.recipient.email;
 
   let delivered = false;
   if (integrationStatus().email && to) {

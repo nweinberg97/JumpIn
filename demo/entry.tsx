@@ -21,6 +21,7 @@ import Connections from "@/app/(app)/connections/page";
 import Me from "@/app/(app)/me/page";
 import Availability from "@/app/(app)/availability/page";
 import Settings from "@/app/(app)/settings/page";
+import Admin from "@/app/(app)/admin/page";
 
 type Route = [RegExp, ComponentType, boolean, string[]];
 const routes: Route[] = [
@@ -35,6 +36,7 @@ const routes: Route[] = [
   [/^\/me$/, Me, true, []],
   [/^\/availability$/, Availability, true, []],
   [/^\/settings$/, Settings, true, []],
+  [/^\/admin$/, Admin, true, []],
 ];
 
 function App() {

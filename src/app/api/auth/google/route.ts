@@ -3,6 +3,7 @@ import { pkceChallenge, randomToken } from "@/server/crypto";
 import { env, integrationStatus } from "@/server/env";
 import { beginOAuth, notConfiguredRedirect, redirectUri, safeReturnTo } from "@/server/oauth";
 import { GOOGLE } from "@/server/providers/google";
+import { LIVE } from "@/lib/supabase/config";
 import { readSession } from "@/server/session";
 
 /**
@@ -15,7 +16,7 @@ export function GET(request: NextRequest) {
   if (!cfg || !integrationStatus().google) return notConfiguredRedirect(request, "google");
   const params = request.nextUrl.searchParams;
   const wantsCalendar = params.get("scope") === "calendar";
-  const intent = params.get("intent") === "link" || readSession(request) ? "link" : "signin";
+  const intent = LIVE || params.get("intent") === "link" || readSession(request) ? "link" : "signin";
   const verifier = randomToken(48);
 
   return beginOAuth(

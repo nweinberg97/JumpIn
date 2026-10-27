@@ -23,7 +23,12 @@ await esbuild.build({
   sourcemap: false,
   target: "es2020",
   jsx: "automatic",
-  define: { "process.env.NODE_ENV": '"production"' },
+  // The static demo never talks to a backend: blank keys keep it in demo mode.
+  define: {
+    "process.env.NODE_ENV": '"production"',
+    "process.env.NEXT_PUBLIC_SUPABASE_URL": '""',
+    "process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY": '""',
+  },
   nodePaths: (process.env.NODE_PATH ?? "").split(":").filter(Boolean),
   alias: {
     "@": join(root, "src"),
@@ -31,6 +36,7 @@ await esbuild.build({
     "next/navigation": join(here, "shims/next-navigation.ts"),
     "next/font/google": join(here, "shims/next-font.ts"),
     "server-only": join(here, "shims/server-only.ts"),
+    "@supabase/ssr": join(here, "shims/supabase.ts"),
   },
   logLevel: "warning",
 });

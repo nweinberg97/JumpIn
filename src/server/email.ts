@@ -69,3 +69,36 @@ ${joinLine}
   const text = `${payload.note}\n\n${payload.subject.name}: ${payload.subject.headline}\n\n${cta}: ${links.view}`;
   return { subject, html, text };
 }
+
+/** "JumpIn is live": the launch email to every approved member. */
+export function launchEmail(name: string, appUrl: string) {
+  const first = escape(name.split(" ")[0] || "there");
+  const subject = "JumpIn is live. Come say hi.";
+  const html = `<!doctype html><html><body style="margin:0;background:#F7F5F0;padding:32px 16px;font-family:Arial,sans-serif;color:#14161C">
+<table role="presentation" width="100%" style="max-width:560px;margin:0 auto;background:#fff;border-radius:16px;border:1px solid #E4E1D8">
+<tr><td style="padding:32px 32px 8px;font-size:26px;font-weight:700">We're live, ${first}.</td></tr>
+<tr><td style="padding:8px 32px;font-size:15px;line-height:1.6">Everyone you've seen on JumpIn can now jump into a conversation. Set yourself to <strong>Open to JumpIn</strong> for half an hour, and see who says hello.</td></tr>
+<tr><td style="padding:20px 32px 28px"><a href="${escape(appUrl)}" style="display:inline-block;padding:12px 28px;border-radius:10px;font-weight:600;text-decoration:none;background:#5B7FE3;color:#fff">Open JumpIn</a></td></tr>
+<tr><td style="padding:0 32px 28px;font-size:12px;color:#858A96">You're getting this because you were onboarded to JumpIn.</td></tr>
+</table></body></html>`;
+  const text = `We're live, ${name.split(" ")[0] || "there"}.\n\nEveryone you've seen on JumpIn can now jump into a conversation. Set yourself to Open to JumpIn for half an hour, and see who says hello.\n\nOpen JumpIn: ${appUrl}`;
+  return { subject, html, text };
+}
+
+/** Up to 100 emails per call (Resend's batch limit); larger lists are chunked. */
+export async function sendBatch(messages: Array<{ to: string; subject: string; html: string; text: string }>) {
+  const cfg = env.email();
+  if (!cfg) throw new Error("Email is not configured");
+  let sent = 0;
+  for (let i = 0; i < messages.length; i += 100) {
+    const chunk = messages.slice(i, i + 100).map((m) => ({ from: cfg.from, to: [m.to], subject: m.subject, html: m.html, text: m.text }));
+    const res = await fetch("https://api.resend.com/emails/batch", {
+      method: "POST",
+      headers: { authorization: `Bearer ${cfg.apiKey}`, "content-type": "application/json" },
+      body: JSON.stringify(chunk),
+    });
+    if (!res.ok) throw new Error(`Resend ${res.status} after ${sent} sent: ${(await res.text()).slice(0, 200)}`);
+    sent += chunk.length;
+  }
+  return sent;
+}
