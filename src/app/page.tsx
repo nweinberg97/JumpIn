@@ -255,7 +255,7 @@ export default function Landing() {
         </span>
         <span>Built for people building a better world.</span>
         <span>
-          <Link href="/privacy">Privacy</Link> · <Link href="/terms">Terms</Link>
+          <Link href="/how-it-works">How it works</Link> · <Link href="/privacy">Privacy</Link> · <Link href="/terms">Terms</Link>
         </span>
       </footer>
     </div>

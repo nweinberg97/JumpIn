@@ -3,8 +3,8 @@ import type { ReactNode } from "react";
 import { BRAND } from "@/lib/brand";
 import { JumpInLogo } from "./Icon";
 
-/** Shared frame for the privacy policy and terms. */
-export function LegalPage({ title, children }: { title: string; children: ReactNode }) {
+/** Shared frame for the privacy policy, terms and How JumpIn works. */
+export function LegalPage({ title, children, dated = true }: { title: string; children: ReactNode; dated?: boolean }) {
   return (
     <div className="legal">
       <header className="legal__head container">
@@ -15,12 +15,15 @@ export function LegalPage({ title, children }: { title: string; children: ReactN
       </header>
       <article className="legal__body container">
         <h1 className="legal__title">{title}</h1>
-        <p className="legal__date">
-          {BRAND.policyEffectiveDate ? `Effective ${BRAND.policyEffectiveDate}` : "Draft: not yet in effect"}
-        </p>
+        {dated && (
+          <p className="legal__date">
+            {BRAND.policyEffectiveDate ? `Effective ${BRAND.policyEffectiveDate}` : "Draft: not yet in effect"}
+          </p>
+        )}
         {children}
         <p className="legal__foot">
-          <Link href="/privacy">Privacy policy</Link> · <Link href="/terms">Terms</Link> · <Link href="/">JumpIn</Link>
+          <Link href="/how-it-works">How JumpIn works</Link> · <Link href="/privacy">Privacy policy</Link> · <Link href="/terms">Terms</Link> ·{" "}
+          <Link href="/">JumpIn</Link>
         </p>
       </article>
     </div>

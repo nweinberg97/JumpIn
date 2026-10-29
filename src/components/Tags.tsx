@@ -44,17 +44,29 @@ export function DemoBadge({ children = "Demo mode" }: { children?: ReactNode }) 
 }
 
 /**
- * The Connector badge: someone the founder onboarded personally, trusted to
- * vouch for people with warm intros.
+ * The two badges. Verified: we know who this is (LinkedIn sign-in, or the
+ * JumpIn team checked). Connector: onboarded by the founder and trusted to
+ * make warm intros. Both are given, never requested.
  */
+export const BADGE_COPY = {
+  verified: "Verified: JumpIn has confirmed who this person is",
+  connector: "Connector: onboarded by the JumpIn team and trusted to make warm intros",
+} as const;
+
+export function VerifiedBadge({ compact }: { compact?: boolean }) {
+  return (
+    <span className={`badge badge--verified ${compact ? "badge--compact" : ""}`} title={BADGE_COPY.verified}>
+      <Icon name="verified" size={compact ? 14 : 16} />
+      {compact ? <span className="sr-only">Verified</span> : "Verified"}
+    </span>
+  );
+}
+
 export function ConnectorChip({ compact }: { compact?: boolean }) {
   return (
-    <span
-      className={`connector-chip ${compact ? "connector-chip--compact" : ""}`}
-      title="Connector: onboarded by the JumpIn team and trusted to make warm intros"
-    >
-      <Icon name="link2" size={compact ? 14 : 16} />
-      {!compact && "Connector"}
+    <span className={`badge badge--connector ${compact ? "badge--compact" : ""}`} title={BADGE_COPY.connector}>
+      <Icon name="link2" size={compact ? 13 : 16} />
+      {compact ? <span className="sr-only">Connector</span> : "Connector"}
     </span>
   );
 }

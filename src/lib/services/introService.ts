@@ -27,7 +27,10 @@ export const introService = {
     subject: Member;
     recipient: IntroRecipient;
     note: string;
+    /** The Connector confirmed they know both people. Required. */
+    knowsBoth: boolean;
   }): Promise<IntroResult> {
+    if (!input.knowsBoth) throw new IntroError("Only introduce people you both know.");
     const subject = {
       id: input.subject.id,
       name: input.subject.name,
@@ -36,7 +39,7 @@ export const introService = {
     };
     try {
       const res = await api<{ introUrl: string; delivered: boolean }>("/api/intros", {
-        json: { introId: input.introId, subject, recipient: input.recipient, note: input.note },
+        json: { introId: input.introId, subject, recipient: input.recipient, note: input.note, knowsBoth: true },
       });
       return { ...res, source: res.delivered ? "email" : "demo" };
     } catch (err) {

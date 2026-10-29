@@ -42,6 +42,8 @@ function parse(body: unknown): IntroRequest | null {
   const s = (b.subject ?? {}) as Record<string, unknown>;
   const r = (b.recipient ?? {}) as Record<string, unknown>;
 
+  // The Connector must confirm they know both people (see /how-it-works#intros).
+  if (b.knowsBoth !== true) return null;
   const introId = str(b.introId, 64);
   const note = str(b.note, 1200);
   const subjectId = str(s.id, 64);
@@ -91,7 +93,7 @@ export async function POST(request: NextRequest) {
   }
   const input = parse(await request.json().catch(() => null));
   if (!input) {
-    return NextResponse.json({ error: "Incomplete intro", code: "invalid" }, { status: 400 });
+    return NextResponse.json({ error: "Incomplete intro. Confirm you know both people.", code: "invalid" }, { status: 400 });
   }
   if (!take(me.id, "intro")) {
     return NextResponse.json({ error: "That's a lot of intros for one day. Try again tomorrow.", code: "rate_limited" }, { status: 429 });

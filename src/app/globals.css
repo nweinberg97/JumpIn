@@ -1518,11 +1518,6 @@ code {
   text-underline-offset: 3px;
 }
 
-.pcard__verified {
-  color: var(--ink);
-  display: inline-flex;
-}
-
 .pcard__tags {
   display: flex;
   gap: 4px;
@@ -1697,6 +1692,10 @@ code {
   font-size: 26px;
   letter-spacing: -0.03em;
   line-height: 1.05;
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .lcard__name:hover {
@@ -2429,20 +2428,32 @@ code {
   gap: 8px 14px;
 }
 
-.verified-chip {
+.profile-hero__badges {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
-  height: 28px;
-  padding: 0 11px 0 8px;
-  border-radius: 999px;
-  background: var(--card);
+  gap: 8px;
+}
+
+.badge-help {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
   border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink-3);
   font-family: var(--body);
   font-size: 13px;
-  font-weight: 650;
+  font-weight: 700;
   letter-spacing: 0;
-  color: var(--linkedin);
+}
+
+.badge-help:hover,
+.badge-help:focus-visible {
+  color: var(--ink);
+  border-color: var(--ink-3);
 }
 
 .profile-hero__place {
@@ -4471,33 +4482,51 @@ textarea.input {
    Warm intros + Connector badge
    ========================================================================== */
 
-.connector-chip {
+.badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   height: 28px;
-  padding: 0 11px 0 9px;
+  padding: 0 11px 0 8px;
   border-radius: 999px;
-  background: var(--mint-soft);
-  border: 1px solid var(--mint);
+  border: 1px solid;
   font-family: var(--body);
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0;
-  color: var(--mint-deep);
   white-space: nowrap;
+  vertical-align: middle;
+  flex-shrink: 0;
 }
 
-.connector-chip--compact {
-  height: 22px;
-  width: 22px;
+.badge--verified {
+  background: var(--peri-soft);
+  border-color: var(--peri-light);
+  color: var(--peri-deep);
+}
+
+.badge--connector {
+  background: var(--mint-soft);
+  border-color: var(--mint);
+  color: var(--mint-deep);
+}
+
+/* Compact: a solid dot with the icon, for cards and lists. */
+.badge--compact {
+  height: 20px;
+  width: 20px;
   padding: 0;
   justify-content: center;
+  border: 0;
+  color: #fff;
 }
 
-.pcard__connector {
-  display: inline-flex;
-  color: var(--mint-deep);
+.badge--compact.badge--verified {
+  background: var(--peri);
+}
+
+.badge--compact.badge--connector {
+  background: var(--mint-deep);
 }
 
 /* Profile: the Connector's way in. */
@@ -5327,4 +5356,144 @@ textarea.input {
   text-align: center;
   font-size: 13px;
   color: var(--ink-3);
+}
+
+/* My profile: "Your badges". */
+.badge-status {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  margin-bottom: 20px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+}
+
+.badge-status__title {
+  font-size: 15px;
+  font-weight: 750;
+}
+
+.badge-status__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px 20px;
+}
+
+.badge-status__list li {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+}
+
+.badge-status__list p {
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+
+.badge-status__item--off .badge {
+  background: var(--grey-soft);
+  border-color: var(--line);
+  color: var(--ink-3);
+}
+
+/* A checkbox with a sentence beside it. */
+.check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--paper);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.check-row input {
+  width: 18px;
+  height: 18px;
+  margin: 1px 0 0;
+  flex-shrink: 0;
+  accent-color: var(--mint-deep);
+}
+
+.check-row:has(input:checked) {
+  border-color: var(--mint);
+  background: var(--mint-soft);
+}
+
+.check-row .link-quiet {
+  white-space: nowrap;
+}
+
+/* How JumpIn works */
+.guide-toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0 8px;
+}
+
+.guide-toc a {
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 650;
+  color: var(--ink-2);
+}
+
+.guide-toc a:hover,
+.guide-toc a:focus-visible {
+  border-color: var(--ink-3);
+  color: var(--ink);
+}
+
+.legal__body h2[id] {
+  scroll-margin-top: 24px;
+}
+
+.guide-badges {
+  display: grid;
+  gap: 14px;
+  margin: 12px 0 0;
+}
+
+.guide-badges div {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+}
+
+.guide-badges dd {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 15.5px;
+}
+
+.rules-summary {
+  display: grid;
+  gap: 10px;
+  padding-left: 18px;
+  margin: 4px 0 0;
+  color: var(--ink-2);
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+
+.rules-summary strong {
+  color: var(--ink);
+}
+
+.panel__foot--links {
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin-top: 12px;
 }

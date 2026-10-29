@@ -82,6 +82,9 @@ Done for onboarding week:
 - [x] A clear message whenever a save fails.
 - [x] Draft privacy policy and terms pages.
 - [x] All the emails: waitlist, welcome, Connector, warm intros, invites and launch. Preview them at /email-previews.
+- [x] Clear Verified and Connector badges on cards and profiles, plus "Your badges" on My profile.
+- [x] Warm intros require the Connector to confirm they know both people (checked on the server too).
+- [x] A "How JumpIn works" page with the house rules, linked from Settings, the account menu and every footer.
 
 Before launch:
 

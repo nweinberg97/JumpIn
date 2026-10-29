@@ -73,7 +73,7 @@ export interface Member {
   weeklyAvailability: WeeklySlot[];
   calendarConnected: boolean;
   jumpInPolicy: JumpInPolicy;
-  /** LinkedIn OIDC identity confirmed. */
+  /** Verified badge: LinkedIn sign-in, or the JumpIn team confirmed who they are. */
   verified: boolean;
   /**
    * Connector badge: a trusted member, onboarded by the founder, who can send

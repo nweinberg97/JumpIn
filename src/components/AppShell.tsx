@@ -79,9 +79,16 @@ export function AppShell({ children }: { children: ReactNode }) {
                       Demo · Exit
                     </button>
                   ) : (
-                    <span className="demo-badge demo-badge--nav" title="Signed in with the demo account">
-                      Demo
-                    </span>
+                    <button
+                      className="demo-badge demo-badge--nav demo-badge--exit"
+                      title="Leave the demo and go back to the home page"
+                      onClick={async () => {
+                        await actions.signOut();
+                        router.replace("/");
+                      }}
+                    >
+                      Demo · Exit
+                    </button>
                   ))}
                 <MyStatus />
                 <UserMenu />
@@ -170,6 +177,9 @@ function UserMenu() {
           </button>
           <button role="menuitem" onClick={() => go("/settings")}>
             <Icon name="settings" size={17} /> Settings &amp; privacy
+          </button>
+          <button role="menuitem" onClick={() => go("/how-it-works")}>
+            <Icon name="compass" size={17} /> How JumpIn works
           </button>
           <hr />
           <button

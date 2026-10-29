@@ -10,7 +10,7 @@ import { Dialog } from "@/components/Dialog";
 import { Icon, InstagramMark, LinkedInMark } from "@/components/Icon";
 import { LoomEmbed } from "@/components/LoomEmbed";
 import { PresenceLabel, StatusPill } from "@/components/StatusPill";
-import { ConnectorChip, TagList } from "@/components/Tags";
+import { ConnectorChip, TagList, VerifiedBadge } from "@/components/Tags";
 import { useToast } from "@/components/Toast";
 import { firstName, jumpInRoute } from "@/lib/availability";
 import { flagEmoji, sharedGround } from "@/lib/match";
@@ -91,12 +91,15 @@ export default function ProfilePage() {
 
             <h1 className="profile-hero__name">
               {member.name}
-              {member.verified && (
-                <span className="verified-chip" title="Identity verified with LinkedIn">
-                  <LinkedInMark size={16} /> Verified
-                </span>
-              )}
-              {member.isConnector && <ConnectorChip />}
+              <span className="profile-hero__badges">
+                {member.verified && <VerifiedBadge />}
+                {member.isConnector && <ConnectorChip />}
+                {(member.verified || member.isConnector) && (
+                  <Link href="/how-it-works#badges" className="badge-help" aria-label="What these badges mean" title="What these badges mean">
+                    ?
+                  </Link>
+                )}
+              </span>
             </h1>
             <p className="profile-hero__place">
               <span>{flagEmoji(member.countryCode)}</span> {member.city}

@@ -17,6 +17,7 @@ import Intro from "@/app/intro/[token]/page";
 import EmailPreviews from "@/app/email-previews/page";
 import Privacy from "@/app/privacy/page";
 import Terms from "@/app/terms/page";
+import HowItWorks from "@/app/how-it-works/page";
 import AppLayout from "@/app/(app)/layout";
 import Discover from "@/app/(app)/discover/page";
 import Profile from "@/app/(app)/people/[id]/page";
@@ -36,6 +37,7 @@ const routes: Route[] = [
   [/^\/email-previews$/, EmailPreviews, false, []],
   [/^\/privacy$/, Privacy, false, []],
   [/^\/terms$/, Terms, false, []],
+  [/^\/how-it-works$/, HowItWorks, false, []],
   [/^\/discover$/, Discover, true, []],
   [/^\/people\/([^/]+)$/, Profile, true, ["id"]],
   [/^\/connections$/, Connections, true, []],
@@ -74,8 +76,9 @@ document.addEventListener(
     // Skip links that are already hash links (from the Link shim) or external.
     if (!a || !href || !href.startsWith("/") || href.startsWith("//") || href.includes("#")) return;
     e.preventDefault();
-    if (a.target === "_blank") window.open(hrefFor(href), "_blank", "noopener");
-    else navigate(href);
+    // Where new tabs are blocked (embedded previews), open it in place.
+    if (a.target === "_blank" && window.open(hrefFor(href), "_blank")) return;
+    navigate(href);
   },
   true,
 );

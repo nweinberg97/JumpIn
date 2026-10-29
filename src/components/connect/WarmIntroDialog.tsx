@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { firstName } from "@/lib/availability";
 import { defaultIntroNote, isEmail } from "@/lib/intro";
@@ -32,6 +33,7 @@ export function WarmIntroDialog({ member, onClose }: { member: Member; onClose: 
   const [picked, setPicked] = useState<Member | null>(null);
   const [note, setNote] = useState("");
   const [noteEdited, setNoteEdited] = useState(false);
+  const [knowsBoth, setKnowsBoth] = useState(false);
   const [phase, setPhase] = useState<Phase>("compose");
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState<WarmIntro | null>(null);
@@ -55,7 +57,7 @@ export function WarmIntroDialog({ member, onClose }: { member: Member; onClose: 
       : name.trim() && isEmail(email)
         ? { kind: "email", email: email.trim(), name: name.trim() }
         : null;
-  const canSend = Boolean(recipient && shownNote.trim() && phase === "compose");
+  const canSend = Boolean(recipient && shownNote.trim() && knowsBoth && phase === "compose");
 
   const send = async () => {
     if (!viewer || !recipient) return;
@@ -63,7 +65,7 @@ export function WarmIntroDialog({ member, onClose }: { member: Member; onClose: 
     setError(null);
     try {
       const id = actions.newIntroId();
-      const res = await introService.send({ introId: id, from: viewer, subject: member, recipient, note: shownNote });
+      const res = await introService.send({ introId: id, from: viewer, subject: member, recipient, note: shownNote, knowsBoth });
       const intro: WarmIntro = {
         id,
         subjectId: member.id,
@@ -182,13 +184,25 @@ export function WarmIntroDialog({ member, onClose }: { member: Member; onClose: 
               />
             </label>
 
+            <label className="check-row intro__knows">
+              <input id="intro-knows-both" type="checkbox" checked={knowsBoth} onChange={(e) => setKnowsBoth(e.target.checked)} />
+              <span>
+                I know {subjectFirst} and {recipientName ? firstName(recipientName) : "this person"} personally, and I think
+                they&apos;d both welcome this intro.{" "}
+                <Link href="/how-it-works#intros" className="link-quiet">
+                  Intro rules
+                </Link>
+              </span>
+            </label>
+
             {error && (
               <p className="form-error" role="alert">
                 {error}
               </p>
             )}
             <p className="fine-print">
-              <Icon name="shield" size={14} /> Sent from JumpIn on your behalf. {subjectFirst}&apos;s email isn&apos;t shared.
+              <Icon name="shield" size={14} /> Sent from JumpIn on your behalf. {subjectFirst} is told about the intro, and
+              nobody&apos;s email is shared.
             </p>
             <div className="jump__actions">
               <button className="btn btn--ghost" onClick={onClose} disabled={phase === "sending"}>
