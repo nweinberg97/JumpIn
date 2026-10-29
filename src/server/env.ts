@@ -34,7 +34,24 @@ export const env = {
     const from = v("INVITE_FROM_EMAIL");
     return apiKey && from ? { apiKey, from, testRecipient: v("INVITE_TEST_RECIPIENT") } : null;
   },
+  /**
+   * Who holds the Connector badge, until the database does: a comma-separated
+   * list of email addresses the founder controls. Only these people can send
+   * warm intros from a real session.
+   */
+  connectorEmails: () =>
+    new Set(
+      (v("CONNECTOR_EMAILS") ?? "")
+        .split(",")
+        .map((e) => e.trim().toLowerCase())
+        .filter(Boolean),
+    ),
 };
+
+/** Whether a signed-in person holds the Connector badge. */
+export function isConnectorEmail(email: string | undefined | null) {
+  return Boolean(email) && env.connectorEmails().has(email!.trim().toLowerCase());
+}
 
 /** A provider only counts as configured if sessions can be secured too. */
 export function integrationStatus(): IntegrationStatus {

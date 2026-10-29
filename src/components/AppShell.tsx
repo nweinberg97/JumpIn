@@ -4,10 +4,13 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { effectiveStatus, firstName } from "@/lib/availability";
+import { authService } from "@/lib/services/authService";
 import { actions, useJumpIn, useNow } from "@/lib/store";
 import { Avatar } from "./Avatar";
 import { ConnectProvider } from "./connect/ConnectProvider";
 import { Icon, JumpInLogo, type IconName } from "./Icon";
+import { LaunchBanner, WaitlistPanel } from "./Launch";
+import { ProblemBar } from "./ProblemBar";
 import { StatusControl } from "./StatusControl";
 import { StatusPill } from "./StatusPill";
 import { ToastProvider } from "./Toast";
@@ -22,7 +25,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const state = useJumpIn();
   const router = useRouter();
   const pathname = usePathname();
-  const { ready, session, viewer } = state;
+  const { ready, session, viewer, access } = state;
+  // Signed in for real but not approved yet: profile pages only.
+  const waiting = access.live && !access.admin && access.membership !== "approved";
+  const profileRoute = ["/me", "/settings", "/availability"].some((p) => pathname?.startsWith(p));
 
   useEffect(() => {
     if (!ready) return;
@@ -49,7 +55,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <span>JumpIn</span>
               </Link>
               <nav className="topnav" aria-label="Main">
-                {NAV.map((n) => (
+                {[...NAV, ...(access.admin ? [{ href: "/admin", label: "Founder", icon: "settings" as IconName }] : [])].map((n) => (
                   <Link
                     key={n.href}
                     href={n.href}
@@ -60,18 +66,39 @@ export function AppShell({ children }: { children: ReactNode }) {
                 ))}
               </nav>
               <div className="topbar__right">
-                {session.provider === "demo" && (
-                  <span className="demo-badge demo-badge--nav" title="Signed in with the demo account">
-                    Demo
-                  </span>
-                )}
+                {session.provider === "demo" &&
+                  (authService.liveSignIn ? (
+                    <button
+                      className="demo-badge demo-badge--nav demo-badge--exit"
+                      title="You're practising in the demo. Your real account is untouched."
+                      onClick={async () => {
+                        await actions.signOut();
+                        router.replace("/discover");
+                      }}
+                    >
+                      Demo · Exit
+                    </button>
+                  ) : (
+                    <button
+                      className="demo-badge demo-badge--nav demo-badge--exit"
+                      title="Leave the demo and go back to the home page"
+                      onClick={async () => {
+                        await actions.signOut();
+                        router.replace("/");
+                      }}
+                    >
+                      Demo · Exit
+                    </button>
+                  ))}
                 <MyStatus />
                 <UserMenu />
               </div>
             </div>
           </header>
-          <main className="main">{children}</main>
+          <LaunchBanner />
+          <main className="main">{waiting && !profileRoute ? <WaitlistPanel /> : children}</main>
           <MobileTabs />
+          <ProblemBar />
         </div>
       </ConnectProvider>
     </ToastProvider>
@@ -150,6 +177,9 @@ function UserMenu() {
           </button>
           <button role="menuitem" onClick={() => go("/settings")}>
             <Icon name="settings" size={17} /> Settings &amp; privacy
+          </button>
+          <button role="menuitem" onClick={() => go("/how-it-works")}>
+            <Icon name="compass" size={17} /> How JumpIn works
           </button>
           <hr />
           <button

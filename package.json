@@ -8,9 +8,13 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "demo:build": "node demo/build.mjs"
+    "demo:build": "node demo/build.mjs",
+    "test": "node --experimental-strip-types --no-warnings --import ./tests/register.mjs --test \"tests/unit/**/*.test.ts\"",
+    "test:db": "bash scripts/test-db.sh"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.6.1",
+    "@supabase/supabase-js": "^2.49.0",
     "next": "^16.0.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

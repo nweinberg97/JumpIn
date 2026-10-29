@@ -8,6 +8,7 @@ import type { Member } from "@/lib/types";
 import { Avatar } from "../Avatar";
 import { useConnect } from "../connect/ConnectProvider";
 import { Icon, InstagramMark, LinkedInMark } from "../Icon";
+import { ConnectorChip, VerifiedBadge } from "../Tags";
 
 /**
  * Compact "they're free right now" card for the Open to JumpIn row:
@@ -25,6 +26,8 @@ export function LiveCard({ member }: { member: Member }) {
         <div className="lcard__head">
           <Link href={`/people/${member.id}`} className="lcard__name">
             {first} <span className="lcard__flag">{flagEmoji(member.countryCode)}</span>
+            {member.verified && <VerifiedBadge compact />}
+            {member.isConnector && <ConnectorChip compact />}
           </Link>
           <Avatar name={member.name} src={member.avatarUrl} size={44} ring online={member.onlineStatus} />
         </div>

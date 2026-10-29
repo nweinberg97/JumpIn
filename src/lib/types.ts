@@ -73,8 +73,13 @@ export interface Member {
   weeklyAvailability: WeeklySlot[];
   calendarConnected: boolean;
   jumpInPolicy: JumpInPolicy;
-  /** LinkedIn OIDC identity confirmed. */
+  /** Verified badge: LinkedIn sign-in, or the JumpIn team confirmed who they are. */
   verified: boolean;
+  /**
+   * Connector badge: a trusted member, onboarded by the founder, who can send
+   * warm intros. Granted by the server only.
+   */
+  isConnector?: boolean;
   joinedAt: ISODateString;
 }
 
@@ -122,6 +127,28 @@ export interface Connection {
   source: "google" | "demo";
 }
 
+/**
+ * Warm intro: a Connector shares a member's profile with someone and says why
+ * they should talk. The recipient is either a member or someone not on
+ * JumpIn yet, who can join through the intro without waiting for approval.
+ */
+export type IntroRecipient =
+  | { kind: "member"; memberId: string; name: string }
+  | { kind: "email"; email: string; name: string };
+
+export interface WarmIntro {
+  id: string;
+  /** The member whose profile is being shared. */
+  subjectId: string;
+  recipient: IntroRecipient;
+  note: string;
+  createdAt: ISODateString;
+  /** Path to what the recipient sees, e.g. /intro/<token>. */
+  introUrl: string;
+  /** Whether the email really went out, or it's a demo preview. */
+  source: "email" | "demo";
+}
+
 export interface Report {
   id: string;
   memberId: string;
@@ -144,6 +171,23 @@ export interface Session {
   linked: { linkedin: boolean; google: boolean; instagram: boolean };
   instagramHandle?: string;
   createdAt: ISODateString;
+}
+
+/**
+ * This deployment and this person. Demo mode: everything open.
+ * Live: before launch only the founder (admin) can start calls; members
+ * waiting to be approved see a holding screen.
+ */
+export interface AppAccess {
+  /** The real backend (Supabase) is switched on. */
+  live: boolean;
+  /** When calls open, if a date is set. ISO. */
+  launchAt: string | null;
+  /** Calls are open now (countdown ended, or opened early). */
+  open: boolean;
+  /** The founder: sees the admin page, can test calls before launch. */
+  admin: boolean;
+  membership: "waitlisted" | "approved" | "suspended" | null;
 }
 
 /** Which real integrations the server has credentials for. Booleans only. */

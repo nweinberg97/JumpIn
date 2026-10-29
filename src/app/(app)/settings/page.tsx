@@ -213,6 +213,32 @@ export default function SettingsPage() {
 
       <section className="panel">
         <header className="panel__head">
+          <h2 className="panel__title">How JumpIn works</h2>
+          <Link href="/how-it-works" className="link-quiet">
+            Read all
+          </Link>
+        </header>
+        <ul className="rules-summary">
+          <li>
+            <strong>Badges.</strong> Verified means JumpIn confirmed who someone is. Connectors were onboarded by the founder
+            and can send warm intros.
+          </li>
+          <li>
+            <strong>Warm intros.</strong> Only between people the Connector knows personally. The person shared is always told.
+          </li>
+          <li>
+            <strong>House rules.</strong> Real names, no selling or spam, and &ldquo;not right now&rdquo; is a complete answer.
+          </li>
+        </ul>
+        <p className="panel__foot panel__foot--left panel__foot--links">
+          <Link href="/how-it-works#rules" className="link-quiet">House rules</Link>
+          <Link href="/terms" className="link-quiet">Terms</Link>
+          <Link href="/privacy" className="link-quiet">Privacy policy</Link>
+        </p>
+      </section>
+
+      <section className="panel">
+        <header className="panel__head">
           <h2 className="panel__title">Session</h2>
         </header>
         <div className="session-actions">

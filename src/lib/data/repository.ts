@@ -1,4 +1,4 @@
-import type { Connection, Member, SafetyState, Session, Viewer } from "../types";
+import type { Connection, Member, SafetyState, Session, Viewer, WarmIntro } from "../types";
 
 /**
  * Everything the UI knows about persistence goes through this interface.
@@ -24,9 +24,16 @@ export interface JumpInRepository {
   listConnections(): Promise<Connection[]>;
   saveConnection(connection: Connection): Promise<Connection>;
 
+  /** Warm intros the viewer has sent (Connectors only). */
+  listIntros(): Promise<WarmIntro[]>;
+  saveIntro(intro: WarmIntro): Promise<WarmIntro>;
+
   getSafety(): Promise<SafetyState>;
   saveSafety(safety: SafetyState): Promise<SafetyState>;
 
   /** Wipe local state (demo reset / sign out of the prototype). */
   reset(): Promise<void>;
+
+  /** Live updates (who's online, status changes). Returns an unsubscribe. */
+  subscribe?(onChange: () => void): () => void;
 }

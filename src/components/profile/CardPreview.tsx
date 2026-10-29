@@ -3,7 +3,8 @@
 import { flagEmoji } from "@/lib/match";
 import type { Viewer } from "@/lib/types";
 import { Portrait } from "../Avatar";
-import { Icon, LinkedInMark } from "../Icon";
+import { Icon } from "../Icon";
+import { ConnectorChip, VerifiedBadge } from "../Tags";
 import { StatusPill } from "../StatusPill";
 
 /** How your card looks to everyone else, updating as you type. */
@@ -22,11 +23,8 @@ export function CardPreview({ draft }: { draft: Viewer }) {
         </div>
         <div className="pcard__namebar">
           <span className="pcard__name">{first}</span>
-          {draft.verified && (
-            <span className="pcard__verified">
-              <LinkedInMark size={17} />
-            </span>
-          )}
+          {draft.verified && <VerifiedBadge compact />}
+          {draft.isConnector && <ConnectorChip compact />}
           <span className="pcard__tags">
             {(draft.impactAreas.length ? draft.impactAreas : ["Your cause"]).slice(0, 2).map((t) => (
               <span key={t} className="tag tag--outline tag--xs">

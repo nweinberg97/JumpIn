@@ -7,6 +7,7 @@ import { Avatar, Portrait } from "@/components/Avatar";
 import { GoogleMark, Icon, InstagramMark, JumpInLogo, LinkedInMark } from "@/components/Icon";
 import { photo, SCENE_PHOTOS, unsplash } from "@/lib/data/photos";
 import { buildSeedMembers } from "@/lib/data/seed";
+import { LaunchCountdownLine } from "@/components/Launch";
 import { authService } from "@/lib/services/authService";
 import { actions, useJumpIn } from "@/lib/store";
 
@@ -52,6 +53,9 @@ export default function Landing() {
     const auth = params.get("auth");
     const provider = params.get("provider");
     const name = provider ? provider[0].toUpperCase() + provider.slice(1) : "That provider";
+    const intro = params.get("intro");
+    if (intro === "1") setNotice("Your warm intro is saved. Sign in with the email it was sent to, and you'll skip the waitlist.");
+    if (intro === "invalid") setNotice("That intro link has expired or isn't valid. You can still sign up below.");
     if (auth === "not-configured") setNotice(`${name} sign-in isn't configured on this server yet, so use the demo for now.`);
     if (auth === "error") setNotice(`${name} sign-in didn't complete (${params.get("reason") ?? "unknown error"}). Try again or use the demo.`);
   }, []);
@@ -185,10 +189,11 @@ export default function Landing() {
           <p className="join__sub">
             {signedIn
               ? "Pick up where you left off."
-              : "Verified with LinkedIn so everyone here is a real person. Your email is never shown to other members."}
+              : "Everyone here is a real person, reviewed by the JumpIn team. Your email is never shown to other members."}
           </p>
 
           {notice && <p className="callout callout--warn">{notice}</p>}
+          <LaunchCountdownLine />
 
           {signedIn ? (
             <Link href="/discover" className="btn btn--jump btn--wide btn--lg">
@@ -196,21 +201,23 @@ export default function Landing() {
             </Link>
           ) : (
             <div className="auth-buttons">
-              <button
-                className="btn btn--linkedin btn--wide btn--lg"
-                onClick={() => authService.continueWithLinkedIn()}
-                disabled={!integrations.linkedin}
-              >
-                <LinkedInMark size={20} /> Continue with LinkedIn
-              </button>
+              {(!authService.liveSignIn || authService.linkedinSignIn) && (
+                <button
+                  className="btn btn--linkedin btn--wide btn--lg"
+                  onClick={() => authService.continueWithLinkedIn()}
+                  disabled={!integrations.linkedin && !authService.liveSignIn}
+                >
+                  <LinkedInMark size={20} /> Continue with LinkedIn
+                </button>
+              )}
               <button
                 className="btn btn--outline btn--wide btn--lg"
                 onClick={() => authService.continueWithGoogle()}
-                disabled={!integrations.google}
+                disabled={!integrations.google && !authService.liveSignIn}
               >
                 <GoogleMark size={20} /> Continue with Google
               </button>
-              {(!integrations.linkedin || !integrations.google) && (
+              {!authService.liveSignIn && (!integrations.linkedin || !integrations.google) && (
                 <p className="setup-note">
                   {!integrations.linkedin && !integrations.google
                     ? "LinkedIn and Google sign-in need credentials"
@@ -231,6 +238,9 @@ export default function Landing() {
               <p className="fine-print fine-print--center">
                 Demo mode uses seeded members and stores everything in this browser. No accounts needed.
               </p>
+              <p className="join__legal">
+                By joining, you agree to the <Link href="/terms">terms</Link> and <Link href="/privacy">privacy policy</Link>.
+              </p>
             </div>
           )}
           <p className="join__ig">
@@ -243,7 +253,10 @@ export default function Landing() {
         <span className="brand">
           <JumpInLogo size={22} /> <span>JumpIn</span>
         </span>
-        <span>A prototype. Built for people building a better world.</span>
+        <span>Built for people building a better world.</span>
+        <span>
+          <Link href="/how-it-works">How it works</Link> · <Link href="/privacy">Privacy</Link> · <Link href="/terms">Terms</Link>
+        </span>
       </footer>
     </div>
   );
