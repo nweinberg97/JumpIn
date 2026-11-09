@@ -1,4 +1,4 @@
-import type { Connection, Member, SafetyState, Session, Viewer } from "../types";
+import type { Connection, Member, SafetyState, Session, Viewer, WarmIntro } from "../types";
 import type { JumpInRepository } from "./repository";
 import { buildSeedMembers } from "./seed";
 
@@ -19,6 +19,7 @@ const KEYS = {
   viewer: `${PREFIX}viewer`,
   connections: `${PREFIX}connections`,
   safety: `${PREFIX}safety`,
+  intros: `${PREFIX}intros`,
   seedEpoch: `${PREFIX}seedEpoch`,
 };
 
@@ -104,6 +105,16 @@ export class LocalRepository implements JumpInRepository {
     else all.unshift(connection);
     write(KEYS.connections, all);
     return connection;
+  }
+
+  async listIntros() {
+    return read<WarmIntro[]>(KEYS.intros, []);
+  }
+
+  async saveIntro(intro: WarmIntro) {
+    const all = await this.listIntros();
+    write(KEYS.intros, [intro, ...all.filter((i) => i.id !== intro.id)]);
+    return intro;
   }
 
   async getSafety() {

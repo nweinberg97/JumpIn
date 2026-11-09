@@ -236,6 +236,22 @@ No component needs to change.
 
 ---
 
+## Live mode (Supabase)
+
+Everything above runs without accounts. Set the Supabase keys and the same app becomes the real, multi-user JumpIn; leave them blank and it stays the demo.
+
+| Variable | What it switches on |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Real sign-in (Google, LinkedIn via Supabase Auth), profiles in Postgres, live presence |
+| `SUPABASE_SECRET_KEY` | Server-side writes: calls, invites and their answers, warm intros, approvals, launch |
+| `ADMIN_EMAILS` | The founder page at `/admin`, and test calls before launch |
+
+**Onboarding mode.** Until the launch date (set on `/admin`), approved members can sign in, build their profile and see each other, but calls stay closed and a countdown shows. New sign-ins wait for approval. The founder can open calls early and sends a one-time "JumpIn is live" email to everyone approved. The demo stays available on the live site as practice.
+
+**Database.** `supabase/migrations/` holds the schema with row-level security on every table; `npm run test:db` checks the rules on a throwaway Postgres (no account needed). Apply them to a project with `npx supabase db push`, or run the files in order in the SQL Editor.
+
+**Where the code is.** `src/lib/supabase/` (clients), `src/proxy.ts` (session refresh), `src/lib/data/supabaseRepository.ts` (live data, behind the same repository interface as the demo), `src/server/identity.ts` (who's calling, launch gate), `src/app/api/admin/*` (founder routes).
+
 ## Live demo (GitHub Pages)
 
 The demo link above is the real app's pages bundled as a static site and committed in `docs/`. GitHub Pages publishes it straight from the branch: **Settings → Pages → Deploy from a branch → `main` → `/docs`**. After changing the app, run `npm run demo:build` and commit `docs/`. The source for the static build is in `demo/`.

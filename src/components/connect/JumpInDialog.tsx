@@ -26,7 +26,7 @@ type StepState = "pending" | "active" | "done";
  *    pinged, and Meet opens straight away.
  */
 export function JumpInDialog({ member, mode, onClose }: { member: Member; mode: Mode; onClose: () => void }) {
-  const { viewer } = useJumpIn();
+  const { viewer, mode: appMode, connections } = useJumpIn();
   const them = firstName(member.name);
   const me = viewer ? firstName(viewer.name) : "me";
 
@@ -126,12 +126,19 @@ export function JumpInDialog({ member, mode, onClose }: { member: Member; mode: 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Live: their real answer arrives through the database (the invite page
+  // updates the call; the app refreshes connections as it changes).
+  const answered = connection ? connections.find((c) => c.id === connection.id)?.status : undefined;
+  useEffect(() => {
+    if (mode === "invite" && answered === "live") setTheirReply("yes");
+  }, [answered, mode]);
+
   // Demo mode: the other person "answers" a few seconds after the invite lands.
   useEffect(() => {
-    if (phase !== "ready" || mode !== "invite" || emailed) return;
+    if (appMode === "live" || phase !== "ready" || mode !== "invite" || emailed) return;
     const t = setTimeout(() => setTheirReply("yes"), 3800);
     return () => clearTimeout(t);
-  }, [phase, mode, emailed]);
+  }, [phase, mode, emailed, appMode]);
 
   const join = () => {
     if (!meeting || !connection) return;

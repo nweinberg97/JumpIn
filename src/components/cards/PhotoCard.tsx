@@ -8,7 +8,8 @@ import { useJumpIn, useNow } from "@/lib/store";
 import type { Member } from "@/lib/types";
 import { useConnect } from "../connect/ConnectProvider";
 import { Portrait } from "../Avatar";
-import { Icon, LinkedInMark } from "../Icon";
+import { Icon } from "../Icon";
+import { ConnectorChip, VerifiedBadge } from "../Tags";
 import { StatusPill } from "../StatusPill";
 
 /**
@@ -47,11 +48,8 @@ export function PhotoCard({ member, priority }: { member: Member; priority?: boo
         <Link href={href} className="pcard__name">
           {first}
         </Link>
-        {member.verified && (
-          <span className="pcard__verified" title="Verified with LinkedIn">
-            <LinkedInMark size={17} />
-          </span>
-        )}
+        {member.verified && <VerifiedBadge compact />}
+        {member.isConnector && <ConnectorChip compact />}
         <span className="pcard__tags">
           {member.impactAreas.slice(0, 2).map((t) => (
             <span key={t} className="tag tag--outline tag--xs">

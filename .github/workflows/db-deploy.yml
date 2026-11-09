@@ -1,0 +1,52 @@
+# Applies new database migrations to the real Supabase project whenever
+# they change, then prints a read-only check of what's there.
+#
+# Setup (once): GitHub → Settings → Secrets and variables → Actions →
+# New repository secret, name SUPABASE_DB_URL, value = Supabase's
+# "Session pooler" connection string with the password filled in.
+# Without the secret this job does nothing.
+name: Database deploy
+
+on:
+  push:
+    branches: [main, backend-foundations]
+    paths:
+      - "supabase/migrations/**"
+      - "scripts/db-deploy.sh"
+      - "scripts/db-verify.sql"
+      - ".github/workflows/db-deploy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never run two deploys against the database at once.
+concurrency:
+  group: db-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the database secret is set
+        id: secret
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::notice::SUPABASE_DB_URL isn't set yet, so nothing was deployed."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Apply migrations
+        if: steps.secret.outputs.ready == 'true'
+        run: bash scripts/db-deploy.sh
+
+      - name: Verify (read-only)
+        if: steps.secret.outputs.ready == 'true'
+        run: psql "$SUPABASE_DB_URL" -X -v ON_ERROR_STOP=1 -f scripts/db-verify.sql

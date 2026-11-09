@@ -4,8 +4,10 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { repository } from "./data";
 import { buildDemoConnections, buildDemoViewer, buildNewViewer } from "./data/seed";
 import { authService, type ServerSession } from "./services/authService";
+import { api } from "./services/http";
 import { getIntegrationStatus } from "./services/integrationService";
 import type {
+  AppAccess,
   AvailabilityStatus,
   Connection,
   IntegrationStatus,
@@ -14,6 +16,7 @@ import type {
   SafetyState,
   Session,
   Viewer,
+  WarmIntro,
 } from "./types";
 
 /**
@@ -28,9 +31,19 @@ export interface AppState {
   viewer: Viewer | null;
   members: Member[];
   connections: Connection[];
+  intros: WarmIntro[];
   safety: SafetyState;
   integrations: IntegrationStatus;
+  /** "live" = the real database; "demo" = seeded members in this browser. */
+  mode: "demo" | "live";
+  /** Launch countdown, approval and founder access (see AppAccess). */
+  access: AppAccess;
+  /** Something didn't save; shown until dismissed or the next success. */
+  problem: string | null;
 }
+
+/** The demo is always fully open: it's for practising. */
+export const DEMO_ACCESS: AppAccess = { live: false, launchAt: null, open: true, admin: false, membership: "approved" };
 
 let state: AppState = {
   ready: false,
@@ -38,9 +51,37 @@ let state: AppState = {
   viewer: null,
   members: [],
   connections: [],
+  intros: [],
   safety: { blockedIds: [], reports: [] },
   integrations: { linkedin: false, google: false, instagram: false, email: false },
+  mode: "demo",
+  access: DEMO_ACCESS,
+  problem: null,
 };
+
+/** Plain words for a failed save; the detail goes to the console. */
+function explain(what: string, err: unknown) {
+  console.error(`[jumpin] ${what}`, err);
+  const message = err instanceof Error ? err.message : "";
+  if (/photo|upload|storage|payload too large|413/i.test(message)) {
+    return "Your photo didn't upload. Try a smaller image (under 2 MB), or a JPEG or PNG.";
+  }
+  if (/network|fetch|Failed to fetch/i.test(message)) return `${what} didn't save: you seem to be offline. Try again in a moment.`;
+  if (/not signed in|JWT|401/i.test(message)) return `${what} didn't save because you were signed out. Sign in again, then retry.`;
+  return `${what} didn't save. Try again; if it keeps happening, tell the JumpIn team.`;
+}
+
+/** Run a save; on failure, show the problem instead of failing silently. */
+async function attempt<T>(what: string, run: () => Promise<T>): Promise<T | null> {
+  try {
+    const result = await run();
+    if (state.problem) set({ problem: null });
+    return result;
+  } catch (err) {
+    set({ problem: explain(what, err) });
+    return null;
+  }
+}
 
 const listeners = new Set<() => void>();
 
@@ -58,15 +99,46 @@ const getSnapshot = () => state;
 
 let loading: Promise<void> | null = null;
 
+let unsubscribe: (() => void) | null = null;
+let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+
+/** Someone's status changed, or someone came online: refresh what's shown. */
+function scheduleRefresh() {
+  if (refreshTimer) return;
+  refreshTimer = setTimeout(async () => {
+    refreshTimer = null;
+    try {
+      const [members, connections] = await Promise.all([repository.listMembers(), repository.listConnections()]);
+      set({ members, connections });
+    } catch {
+      /* transient: the next change will try again */
+    }
+  }, 400);
+}
+
+async function loadAccess(mode: "demo" | "live"): Promise<AppAccess> {
+  if (mode === "demo") return DEMO_ACCESS;
+  try {
+    return await api<AppAccess>("/api/app-state");
+  } catch {
+    return { live: true, launchAt: null, open: false, admin: false, membership: null };
+  }
+}
+
 async function load() {
-  const [session, viewer, members, connections, safety] = await Promise.all([
+  const mode = await repository.resolve();
+  unsubscribe?.();
+  unsubscribe = repository.subscribe(scheduleRefresh);
+  const accessP = loadAccess(mode);
+  const [session, viewer, members, connections, intros, safety] = await Promise.all([
     repository.getSession(),
     repository.getViewer(),
     repository.listMembers(),
     repository.listConnections(),
+    repository.listIntros(),
     repository.getSafety(),
   ]);
-  set({ ready: true, session, viewer, members, connections, safety });
+  set({ ready: true, session, viewer, members, connections, intros, safety, mode, access: await accessP });
   getIntegrationStatus().then((integrations) => set({ integrations }));
 }
 
@@ -78,15 +150,18 @@ export function ensureLoaded() {
 const uid = (prefix: string) =>
   `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 
+/** Returns the saved profile, or null (with `problem` set) if it didn't save. */
 async function saveViewer(viewer: Viewer) {
-  await repository.saveViewer(viewer);
-  set({ viewer });
-  return viewer;
+  const saved = await attempt("Your profile", () => repository.saveViewer(viewer));
+  if (!saved) return null;
+  set({ viewer: saved });
+  return saved;
 }
 
 export const actions = {
   /** Demo sign-in: a complete profile and a little history, no credentials. */
   async signInDemo() {
+    repository.enterDemo();
     const now = Date.now();
     await repository.reset();
     const session: Session = {
@@ -105,6 +180,7 @@ export const actions = {
 
   /** Demo sign-in with a blank profile, to try onboarding without OAuth. */
   async signInDemoFresh() {
+    repository.enterDemo();
     const now = Date.now();
     await repository.reset();
     await repository.saveSession({
@@ -142,6 +218,8 @@ export const actions = {
           verified: existing!.verified || server.linked.linkedin,
           calendarConnected: existing!.calendarConnected || server.linked.google,
         };
+    // The Connector badge is the server's call, never the browser's.
+    viewer.isConnector = Boolean(server.connector);
     if (server.linked.google) viewer.calendarConnected = true;
     await repository.saveViewer(viewer);
     if (fresh) {
@@ -169,14 +247,29 @@ export const actions = {
     return state.viewer;
   },
 
+  /** Reload everything, e.g. right after a real sign-in. */
+  async reload() {
+    loading = load();
+    await loading;
+    return state.viewer;
+  },
+
   async signOut() {
-    await authService.signOut();
+    // Leaving the demo on the live site keeps the real account signed in.
+    const leavingDemo = state.mode === "demo";
+    if (leavingDemo) await authService.signOutPrototype();
+    else await authService.signOut();
     await repository.saveSession(null);
     set({ session: null });
+    // Back to the real account, if there is one signed in underneath.
+    if (leavingDemo && repository.live) {
+      loading = load();
+      await loading;
+    }
   },
 
   async resetDemo() {
-    await authService.signOut();
+    await authService.signOutPrototype();
     await repository.reset();
     loading = load();
     await loading;
@@ -201,12 +294,25 @@ export const actions = {
   },
 
   async saveConnection(connection: Connection) {
-    await repository.saveConnection(connection);
+    const ok = await attempt("Your call", () => repository.saveConnection(connection));
+    if (!ok) return null;
     set({ connections: await repository.listConnections() });
     return connection;
   },
 
-  newConnectionId: () => uid("c"),
+  newConnectionId: () =>
+    typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : uid("c"),
+  newIntroId: () => uid("i"),
+
+  dismissProblem() {
+    set({ problem: null });
+  },
+
+  async saveIntro(intro: WarmIntro) {
+    await repository.saveIntro(intro);
+    set({ intros: await repository.listIntros() });
+    return intro;
+  },
 
   async updateConnection(id: string, patch: Partial<Connection>) {
     const existing = state.connections.find((c) => c.id === id);
@@ -230,7 +336,7 @@ export const actions = {
       ...state.safety,
       blockedIds: [...new Set([...state.safety.blockedIds, memberId])],
     };
-    await repository.saveSafety(safety);
+    if (!(await attempt("That change", () => repository.saveSafety(safety)))) return;
     set({ safety });
   },
 
@@ -239,7 +345,7 @@ export const actions = {
       ...state.safety,
       blockedIds: state.safety.blockedIds.filter((id) => id !== memberId),
     };
-    await repository.saveSafety(safety);
+    if (!(await attempt("That change", () => repository.saveSafety(safety)))) return;
     set({ safety });
   },
 
@@ -252,7 +358,7 @@ export const actions = {
       createdAt: new Date().toISOString(),
     };
     const safety = { ...state.safety, reports: [...state.safety.reports, report] };
-    await repository.saveSafety(safety);
+    if (!(await attempt("That change", () => repository.saveSafety(safety)))) return;
     set({ safety });
   },
 };

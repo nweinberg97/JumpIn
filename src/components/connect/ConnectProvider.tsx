@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useState, type ReactNode } from
 import { jumpInRoute } from "@/lib/availability";
 import { useJumpIn } from "@/lib/store";
 import type { Member } from "@/lib/types";
+import { LaunchDialog } from "../Launch";
 import { JumpInDialog } from "./JumpInDialog";
 import { ScheduleDialog } from "./ScheduleDialog";
 
@@ -23,24 +24,31 @@ const ConnectContext = createContext<ConnectApi>({ jumpIn: () => {}, schedule: (
 type Active =
   | { kind: "jump"; member: Member; mode: "direct" | "invite" }
   | { kind: "schedule"; member: Member; reason?: string }
+  | { kind: "prelaunch"; member: Member }
   | null;
 
 export function ConnectProvider({ children }: { children: ReactNode }) {
-  const { connections } = useJumpIn();
+  const { connections, access } = useJumpIn();
   const [active, setActive] = useState<Active>(null);
+  // Before launch, only the founder can start calls (to test them).
+  const closed = access.live && !access.open && !access.admin;
 
   const jumpIn = useCallback(
     (member: Member) => {
+      if (closed) return setActive({ kind: "prelaunch", member });
       const route = jumpInRoute(member, connections, Date.now());
       if (route.mode === "schedule") setActive({ kind: "schedule", member, reason: route.reason });
       else setActive({ kind: "jump", member, mode: route.mode });
     },
-    [connections],
+    [connections, closed],
   );
 
-  const schedule = useCallback((member: Member, reason?: string) => {
-    setActive({ kind: "schedule", member, reason });
-  }, []);
+  const schedule = useCallback(
+    (member: Member, reason?: string) => {
+      setActive(closed ? { kind: "prelaunch", member } : { kind: "schedule", member, reason });
+    },
+    [closed],
+  );
 
   const close = useCallback(() => setActive(null), []);
 
@@ -48,6 +56,7 @@ export function ConnectProvider({ children }: { children: ReactNode }) {
     <ConnectContext.Provider value={{ jumpIn, schedule }}>
       {children}
       {active?.kind === "jump" && <JumpInDialog member={active.member} mode={active.mode} onClose={close} />}
+      {active?.kind === "prelaunch" && <LaunchDialog name={active.member.name} onClose={close} />}
       {active?.kind === "schedule" && (
         <ScheduleDialog member={active.member} reason={active.reason} onClose={close} />
       )}

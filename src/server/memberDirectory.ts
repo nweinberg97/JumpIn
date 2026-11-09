@@ -47,3 +47,19 @@ export function deliverableEmailFor(memberId: string): string | null {
   if (!email || email.endsWith(".example")) return null;
   return email;
 }
+
+/**
+ * Where to deliver to a member, in either mode. Live: their private email,
+ * read with the secret key (member_private has no client access at all).
+ */
+export async function emailForMember(memberId: string): Promise<string | null> {
+  const test = env.email()?.testRecipient;
+  if (test) return test;
+  const { LIVE } = await import("@/lib/supabase/config");
+  if (!LIVE) return deliverableEmailFor(memberId);
+  const { adminClient } = await import("@/lib/supabase/server");
+  const db = adminClient();
+  if (!db) return null;
+  const { data } = await db.from("member_private").select("email").eq("member_id", memberId).maybeSingle();
+  return (data as { email: string } | null)?.email ?? null;
+}

@@ -6,16 +6,16 @@ import { Avatar } from "@/components/Avatar";
 import { useConnect } from "@/components/connect/ConnectProvider";
 import { Icon } from "@/components/Icon";
 import { StatusPill } from "@/components/StatusPill";
-import { DemoBadge } from "@/components/Tags";
+import { ConnectorChip, DemoBadge } from "@/components/Tags";
 import { useToast } from "@/components/Toast";
 import { effectiveStatus, firstName } from "@/lib/availability";
 import { displayStatus, type DisplayStatus } from "@/lib/connections";
 import { actions, useJumpIn, useNow } from "@/lib/store";
 import { formatWhen, relativeTime } from "@/lib/time";
-import type { Connection, Member } from "@/lib/types";
+import type { Connection, Member, WarmIntro } from "@/lib/types";
 
 export default function ConnectionsPage() {
-  const { connections, members, safety } = useJumpIn();
+  const { connections, members, safety, intros } = useJumpIn();
   const now = useNow(15_000);
   const byId = new Map(members.map((m) => [m.id, m]));
   const blocked = new Set(safety.blockedIds);
@@ -79,7 +79,58 @@ export default function ConnectionsPage() {
           ))}
         </Group>
       )}
+      {intros.length > 0 && (
+        <section className="conn-group">
+          <h2 className="conn-group__title">
+            Warm intros you&apos;ve made <ConnectorChip compact />
+          </h2>
+          <ul className="conn-list">
+            {intros.map((i) => (
+              <IntroRow key={i.id} intro={i} subject={byId.get(i.subjectId)} now={now} />
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
+  );
+}
+
+function IntroRow({ intro, subject, now }: { intro: WarmIntro; subject?: Member; now: number }) {
+  const subjectName = subject?.name ?? "A member";
+  const inner = (
+    <>
+      <Avatar name={subjectName} src={subject?.avatarUrl} size={52} />
+      <span className="conn__text">
+        <strong>
+          {subjectName} <Icon name="arrowRight" size={14} /> {intro.recipient.name}
+        </strong>
+        <span className="conn__detail">
+          <Icon name="send" size={14} />
+          {intro.recipient.kind === "email" ? "Invited to join JumpIn" : "Already a member"} · sent{" "}
+          {relativeTime(Date.parse(intro.createdAt), now)}
+        </span>
+      </span>
+    </>
+  );
+  return (
+    <li className="conn conn--intro">
+      {subject ? (
+        <Link href={`/people/${subject.id}`} className="conn__who">
+          {inner}
+        </Link>
+      ) : (
+        <div className="conn__who">{inner}</div>
+      )}
+      <div className="conn__side">
+        <span className="conn__badge conn__badge--intro">Intro sent</span>
+        {intro.source === "demo" && <DemoBadge>Demo</DemoBadge>}
+        <div className="conn__actions">
+          <a className="btn btn--outline btn--sm" href={intro.introUrl} target="_blank" rel="noreferrer">
+            What they got <Icon name="external" size={14} />
+          </a>
+        </div>
+      </div>
+    </li>
   );
 }
 

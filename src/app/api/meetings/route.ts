@@ -1,7 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { withGoogle } from "@/server/googleAccess";
 import { createMeetEvent } from "@/server/googleCalendar";
-import { deliverableEmailFor } from "@/server/memberDirectory";
+import { callsOpenFor, identify } from "@/server/identity";
+import { emailForMember } from "@/server/memberDirectory";
+import { take } from "@/server/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -29,8 +31,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid start/end" }, { status: 400 });
   }
 
-  return withGoogle(request, async (accessToken) => {
-    const guest = body.inviteMember ? deliverableEmailFor(body.memberId) : null;
+  const me = await identify(request);
+  if (me && !(await callsOpenFor(me))) {
+    return NextResponse.json({ error: "Calls open at launch", code: "not_launched" }, { status: 403 });
+  }
+
+  return withGoogle(request, async (accessToken, session) => {
+    if (!take(session.profile.sub, "meeting")) {
+      return NextResponse.json(
+        { error: "Too many calls started this hour. Try again in a little while.", code: "rate_limited" },
+        { status: 429 },
+      );
+    }
+    const guest = body.inviteMember ? await emailForMember(body.memberId) : null;
     const result = await createMeetEvent(accessToken, {
       summary: body.title.slice(0, 200),
       description: body.description?.slice(0, 2000),

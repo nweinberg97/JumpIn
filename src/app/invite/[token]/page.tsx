@@ -25,8 +25,14 @@ export default function InvitePage() {
     const p = new URLSearchParams(window.location.search);
     if (p.get("answered") === "no") setAnswer("no");
     if (p.get("expired") === "1") setExpired(true);
-    if (decoded && Date.parse(decoded.payload.expiresAt) < Date.now()) setExpired(true);
-  }, [decoded]);
+    const isExpired = decoded ? Date.parse(decoded.payload.expiresAt) < Date.now() : false;
+    if (isExpired) setExpired(true);
+    // From the email's Yes / Not right now buttons: answer on arrival.
+    const pick = p.get("pick");
+    if (decoded?.signed && !isExpired && !p.get("answered") && (pick === "yes" || pick === "no")) {
+      window.location.replace(`/api/invites/respond?answer=${pick}&token=${encodeURIComponent(token)}`);
+    }
+  }, [decoded, token]);
 
   if (!decoded) {
     return (

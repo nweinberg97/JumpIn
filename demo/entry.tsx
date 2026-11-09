@@ -13,6 +13,11 @@ import Landing from "@/app/page";
 import Onboarding from "@/app/onboarding/page";
 import AuthComplete from "@/app/auth/complete/page";
 import Invite from "@/app/invite/[token]/page";
+import Intro from "@/app/intro/[token]/page";
+import EmailPreviews from "@/app/email-previews/page";
+import Privacy from "@/app/privacy/page";
+import Terms from "@/app/terms/page";
+import HowItWorks from "@/app/how-it-works/page";
 import AppLayout from "@/app/(app)/layout";
 import Discover from "@/app/(app)/discover/page";
 import Profile from "@/app/(app)/people/[id]/page";
@@ -20,6 +25,7 @@ import Connections from "@/app/(app)/connections/page";
 import Me from "@/app/(app)/me/page";
 import Availability from "@/app/(app)/availability/page";
 import Settings from "@/app/(app)/settings/page";
+import Admin from "@/app/(app)/admin/page";
 
 type Route = [RegExp, ComponentType, boolean, string[]];
 const routes: Route[] = [
@@ -27,12 +33,18 @@ const routes: Route[] = [
   [/^\/onboarding$/, Onboarding, false, []],
   [/^\/auth\/complete$/, AuthComplete, false, []],
   [/^\/invite\/([^/]+)$/, Invite, false, ["token"]],
+  [/^\/intro\/([^/]+)$/, Intro, false, ["token"]],
+  [/^\/email-previews$/, EmailPreviews, false, []],
+  [/^\/privacy$/, Privacy, false, []],
+  [/^\/terms$/, Terms, false, []],
+  [/^\/how-it-works$/, HowItWorks, false, []],
   [/^\/discover$/, Discover, true, []],
   [/^\/people\/([^/]+)$/, Profile, true, ["id"]],
   [/^\/connections$/, Connections, true, []],
   [/^\/me$/, Me, true, []],
   [/^\/availability$/, Availability, true, []],
   [/^\/settings$/, Settings, true, []],
+  [/^\/admin$/, Admin, true, []],
 ];
 
 function App() {
@@ -64,8 +76,9 @@ document.addEventListener(
     // Skip links that are already hash links (from the Link shim) or external.
     if (!a || !href || !href.startsWith("/") || href.startsWith("//") || href.includes("#")) return;
     e.preventDefault();
-    if (a.target === "_blank") window.open(hrefFor(href), "_blank", "noopener");
-    else navigate(href);
+    // Where new tabs are blocked (embedded previews), open it in place.
+    if (a.target === "_blank" && window.open(hrefFor(href), "_blank")) return;
+    navigate(href);
   },
   true,
 );

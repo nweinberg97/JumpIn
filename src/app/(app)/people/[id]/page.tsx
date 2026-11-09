@@ -5,11 +5,12 @@ import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { Portrait } from "@/components/Avatar";
 import { useConnect } from "@/components/connect/ConnectProvider";
+import { WarmIntroDialog } from "@/components/connect/WarmIntroDialog";
 import { Dialog } from "@/components/Dialog";
 import { Icon, InstagramMark, LinkedInMark } from "@/components/Icon";
 import { LoomEmbed } from "@/components/LoomEmbed";
 import { PresenceLabel, StatusPill } from "@/components/StatusPill";
-import { TagList } from "@/components/Tags";
+import { ConnectorChip, TagList, VerifiedBadge } from "@/components/Tags";
 import { useToast } from "@/components/Toast";
 import { firstName, jumpInRoute } from "@/lib/availability";
 import { flagEmoji, sharedGround } from "@/lib/match";
@@ -26,6 +27,7 @@ export default function ProfilePage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [reporting, setReporting] = useState(false);
   const [blocking, setBlocking] = useState(false);
+  const [introducing, setIntroducing] = useState(false);
 
   const member = members.find((m) => m.id === id);
 
@@ -89,11 +91,15 @@ export default function ProfilePage() {
 
             <h1 className="profile-hero__name">
               {member.name}
-              {member.verified && (
-                <span className="verified-chip" title="Identity verified with LinkedIn">
-                  <LinkedInMark size={16} /> Verified
-                </span>
-              )}
+              <span className="profile-hero__badges">
+                {member.verified && <VerifiedBadge />}
+                {member.isConnector && <ConnectorChip />}
+                {(member.verified || member.isConnector) && (
+                  <Link href="/how-it-works#badges" className="badge-help" aria-label="What these badges mean" title="What these badges mean">
+                    ?
+                  </Link>
+                )}
+              </span>
             </h1>
             <p className="profile-hero__place">
               <span>{flagEmoji(member.countryCode)}</span> {member.city}
@@ -190,6 +196,18 @@ export default function ProfilePage() {
           </div>
 
           <aside className="profile-side">
+            {viewer?.isConnector && (
+              <section className="intro-cta">
+                <p className="intro-cta__eyebrow">
+                  <ConnectorChip compact /> You&apos;re a Connector
+                </p>
+                <p className="intro-cta__copy">Know someone {first} should meet? Send them a warm intro.</p>
+                <button className="btn btn--outline btn--wide" onClick={() => setIntroducing(true)}>
+                  <Icon name="send" size={16} /> Introduce {first}
+                </button>
+              </section>
+            )}
+
             <section className="side-block">
               <h2 className="side-block__title">Impact areas</h2>
               <TagList items={member.impactAreas} tone="peri" highlight={shared?.impactAreas} />
@@ -265,6 +283,8 @@ export default function ProfilePage() {
           </button>
         )}
       </div>
+
+      {introducing && <WarmIntroDialog member={member} onClose={() => setIntroducing(false)} />}
 
       <ReportDialog
         open={reporting}
